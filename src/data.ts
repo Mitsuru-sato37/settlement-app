@@ -21,8 +21,8 @@ export const defaultExpenses: ExpenseItem[] = [
   { id: 'train', label: 'レンタカー・ガソリン', amount: 7200, payerId: 'yuki', participantIds: ['mitsu', 'ken', 'yuki'] },
 ];
 
-export const gameNotes: Record<Exclude<SettlementMode, 'normal' | 'roulette'>, { metric: string; values: string[] }> = {
-  poker: { metric: 'チップ収支', values: ['+ ¥12,000', '- ¥4,000', '+ ¥7,500', '- ¥15,500'] },
-  mahjong: { metric: '点棒収支', values: ['+ 42,000', '- 18,000', '+ 6,000', '- 30,000'] },
-  noriumi: { metric: '投資 / 回収', values: ['¥10,000 / ¥18,500', '¥10,000 / ¥3,000', '¥10,000 / ¥12,000', '¥10,000 / ¥6,500'] },
+export const gameNotes: Record<Exclude<SettlementMode, 'normal' | 'roulette'>, { metric: string; values: string[]; balances: number[] }> = {
+  poker: { metric: 'チップ収支', values: ['+ ¥12,000', '- ¥4,000', '+ ¥7,500', '- ¥15,500'], balances: [12000, -4000, 7500, -15500] },
+  mahjong: { metric: '点棒収支', values: ['+ 42,000', '- 18,000', '+ 6,000', '- 30,000'], balances: [42000, -18000, 6000, -30000] },
+  noriumi: { metric: '投資 / 回収', values: ['¥10,000 / ¥18,500', '¥10,000 / ¥3,000', '¥10,000 / ¥12,000', '¥10,000 / ¥6,500'], balances: [8500, -7000, 2000, -3500] },
 };

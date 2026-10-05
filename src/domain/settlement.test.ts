@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateSettlement, splitExpense } from './settlement';
+import { calculateGameBalance, calculateRouletteShares, calculateSettlement, calculateTransfers, splitExpense } from './settlement';
 
 describe('settlement calculations', () => {
   it('splits an expense equally among selected participants', () => {
@@ -33,6 +33,29 @@ describe('settlement calculations', () => {
       { participantId: 'a', amount: 1500 },
       { participantId: 'b', amount: -1000 },
       { participantId: 'c', amount: -500 },
+    ]);
+  });
+
+  it('creates concrete payments from debtors to recipients', () => {
+    expect(calculateTransfers([
+      { participantId: 'a', amount: 1500 },
+      { participantId: 'b', amount: -1000 },
+      { participantId: 'c', amount: -500 },
+    ])).toEqual([
+      { fromId: 'b', toId: 'a', amount: 1000 },
+      { fromId: 'c', toId: 'a', amount: 500 },
+    ]);
+  });
+
+  it('reports whether a game balance is settled to zero', () => {
+    expect(calculateGameBalance([12000, -4000, 7500, -15500])).toEqual({ total: 0, difference: 0, isBalanced: true });
+    expect(calculateGameBalance([12000, -4000])).toEqual({ total: 8000, difference: 8000, isBalanced: false });
+  });
+
+  it('calculates editable roulette amounts and percentages', () => {
+    expect(calculateRouletteShares({ a: 1000, b: 500 })).toEqual([
+      { participantId: 'a', amount: 1000, percentage: 66.7 },
+      { participantId: 'b', amount: 500, percentage: 33.3 },
     ]);
   });
 });

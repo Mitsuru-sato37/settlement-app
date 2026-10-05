@@ -24,3 +24,21 @@ export type SettlementSummary = {
   total: number;
   balances: Balance[];
 };
+
+export type Transfer = {
+  fromId: string;
+  toId: string;
+  amount: number;
+};
+
+export type GameBalanceStatus = {
+  total: number;
+  difference: number;
+  isBalanced: boolean;
+};
+
+export type RouletteShare = {
+  participantId: string;
+  amount: number;
+  percentage: number;
+};
