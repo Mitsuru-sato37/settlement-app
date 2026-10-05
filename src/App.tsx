@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateSettlement, calculateTransfers, pickWeightedParticipant } from './domain/settlement';
+import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, pickWeightedParticipant } from './domain/settlement';
 import type { ExpenseItem, MahjongPlayerInput, MahjongSettings, SettlementMode } from './domain/model';
 import { defaultExpenses, gameNotes, modeInfo, participants as initialParticipants } from './data';
 import { ModeNav } from './components/ModeNav';
@@ -96,17 +96,14 @@ function RoulettePanel({ participants }: { participants: typeof initialParticipa
     segmentStart = segmentEnd;
     return segment;
   }).join(', ');
-  const wheelBackground = total > 0 ? `conic-gradient(from -90deg, ${wheelSegments})` : 'radial-gradient(circle, #f6a623 0 7%, #fff1d5 8% 17%, #d58a3d 18% 20%, #fff8eb 21% 50%, #f6a623 51% 53%, #fff1d5 54%)';
+  const wheelBackground = total > 0 ? `conic-gradient(from 0deg, ${wheelSegments})` : 'radial-gradient(circle, #f6a623 0 7%, #fff1d5 8% 17%, #d58a3d 18% 20%, #fff8eb 21% 50%, #f6a623 51% 53%, #fff1d5 54%)';
   const updateAmount = (participantId: string, value: string) => setAmounts((current) => ({ ...current, [participantId]: Math.max(0, Number(value) || 0) }));
   const spin = () => {
     if (spinning || total === 0) return;
     const selectedId = pickWeightedParticipant(shares, Math.random());
     if (!selectedId) return;
-    const selectedIndex = shares.findIndex((share) => share.participantId === selectedId);
-    const selectedStart = shares.slice(0, selectedIndex).reduce((sum, share) => sum + share.amount, 0);
-    const selectedAmount = shares[selectedIndex]?.amount ?? 0;
-    const selectedMidpoint = ((selectedStart + selectedAmount / 2) / total) * 360;
-    const nextRotation = rotation + 2160 + (360 - selectedMidpoint);
+    const nextRotation = calculateRouletteTargetRotation(rotation, shares, selectedId);
+    if (nextRotation === null) return;
     setRotation(nextRotation);
     setSpinning(true);
     window.setTimeout(() => {
@@ -114,7 +111,7 @@ function RoulettePanel({ participants }: { participants: typeof initialParticipa
       setSpinning(false);
     }, 2800);
   };
-  return <section className="card roulette-card"><div className={`roulette-wheel ${spinning ? 'spinning' : ''}`} style={{ background: wheelBackground, transform: `rotate(${rotation}deg)` }}><span>◉</span></div><span className="eyebrow">今夜の支払い担当</span><h2>{spinning ? 'ルーレットが回っています…' : `${payer?.name ?? '支払者'} が全額お支払い`}</h2><p>支払額が多い人ほど、ホイールの面積と当選確率が大きくなります。</p><button className="primary-button" disabled={spinning || total === 0} onClick={spin}>{spinning ? '抽選中…' : total === 0 ? '支払額を入力してください' : 'ルーレットを回す'} <span>↻</span></button><div className="roulette-total"><span>支払い総額</span><strong>¥{total.toLocaleString('ja-JP')}</strong></div><div className="roulette-editor"><div className="subsection-heading"><span className="eyebrow">支払い内訳</span><strong>{participants.length}人で分担</strong></div>{participants.map((participant, index) => { const share = shares.find((item) => item.participantId === participant.id)!; return <div className="roulette-edit-row" key={participant.id}><div className="person"><span className="roulette-color-dot" style={{ backgroundColor: participant.color }} /><Avatar participant={participant} small /><strong>{participant.name}</strong></div><label><span>¥</span><input type="number" min="0" step="100" value={share.amount} onChange={(event) => updateAmount(participant.id, event.target.value)} aria-label={`${participant.name}の支払額`} /></label><strong className="share-percent">{share.percentage.toFixed(1)}%</strong></div>; })}</div><p className="roulette-probability-note">ホイールの色付き面積が、その人に当たる確率です。</p><div className="roulette-members">{participants.map((participant, index) => <div className={`roulette-member ${index === safeWinner ? 'winner' : ''}`} key={participant.id}><Avatar participant={participant} small /><span>{participant.name}</span>{index === safeWinner && <span className="winner-mark">★</span>}</div>)}</div></section>;
+  return <section className="card roulette-card"><div className={`roulette-wheel ${spinning ? 'spinning' : ''}`} style={{ background: wheelBackground, transform: `rotate(${rotation}deg)` }}><span>◉</span></div><span className="eyebrow">今夜の支払い担当</span><h2>{spinning ? 'ルーレットが回っています…' : `${payer?.name ?? '支払者'} が全額お支払い`}</h2><p>支払額が多い人ほど、ホイールの面積と当選確率が大きくなります。</p><button className="primary-button" disabled={spinning || total === 0} onClick={spin}>{spinning ? '抽選中…' : total === 0 ? '支払額を入力してください' : 'ルーレットを回す'} <span>↻</span></button><div className="roulette-total"><span>支払い総額</span><strong>¥{total.toLocaleString('ja-JP')}</strong></div><div className="roulette-editor"><div className="subsection-heading"><span className="eyebrow">支払い内訳</span><strong>{participants.length}人で分担</strong></div>{participants.map((participant) => { const share = shares.find((item) => item.participantId === participant.id)!; return <div className="roulette-edit-row" key={participant.id}><div className="person"><span className="roulette-color-dot" style={{ backgroundColor: participant.color }} /><Avatar participant={participant} small /><strong>{participant.name}</strong></div><label><span>¥</span><input type="number" min="0" step="100" value={share.amount} onChange={(event) => updateAmount(participant.id, event.target.value)} aria-label={`${participant.name}の支払額`} /></label><strong className="share-percent">{share.percentage.toFixed(1)}%</strong></div>; })}</div><p className="roulette-probability-note">ホイールの色付き面積が、その人に当たる確率です。</p><div className="roulette-members">{participants.map((participant, index) => <div className={`roulette-member ${index === safeWinner ? 'winner' : ''}`} key={participant.id}><Avatar participant={participant} small /><span>{participant.name}</span>{index === safeWinner && <span className="winner-mark">★</span>}</div>)}</div></section>;
 }
 
 export default App;

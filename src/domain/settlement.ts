@@ -91,3 +91,14 @@ export function pickWeightedParticipant(shares: RouletteShare[], randomValue: nu
 
   return shares[shares.length - 1]?.participantId ?? null;
 }
+
+export function calculateRouletteTargetRotation(currentRotation: number, shares: RouletteShare[], participantId: string): number | null {
+  const total = shares.reduce((sum, share) => sum + share.amount, 0);
+  const selectedIndex = shares.findIndex((share) => share.participantId === participantId);
+  if (total <= 0 || selectedIndex < 0) return null;
+
+  const selectedStart = shares.slice(0, selectedIndex).reduce((sum, share) => sum + share.amount, 0);
+  const selectedAmount = shares[selectedIndex]?.amount ?? 0;
+  const selectedMidpoint = ((selectedStart + selectedAmount / 2) / total) * 360;
+  return currentRotation + 2160 + (360 - selectedMidpoint);
+}
