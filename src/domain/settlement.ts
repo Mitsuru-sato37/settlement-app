@@ -78,3 +78,16 @@ export function calculateRouletteShares(amounts: Record<string, number>): Roulet
     return { participantId, amount: safeAmount, percentage: total === 0 ? 0 : Math.round((safeAmount / total) * 1000) / 10 };
   });
 }
+
+export function pickWeightedParticipant(shares: RouletteShare[], randomValue: number): string | null {
+  const total = shares.reduce((sum, share) => sum + share.amount, 0);
+  if (total <= 0) return null;
+
+  let cursor = Math.max(0, Math.min(0.999999, randomValue)) * total;
+  for (const share of shares) {
+    cursor -= share.amount;
+    if (cursor < 0) return share.participantId;
+  }
+
+  return shares[shares.length - 1]?.participantId ?? null;
+}

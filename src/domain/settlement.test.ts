@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateSettlement, calculateTransfers, splitExpense } from './settlement';
+import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateSettlement, calculateTransfers, pickWeightedParticipant, splitExpense } from './settlement';
 
 describe('settlement calculations', () => {
   it('splits an expense equally among selected participants', () => {
@@ -57,6 +57,13 @@ describe('settlement calculations', () => {
       { participantId: 'a', amount: 1000, percentage: 66.7 },
       { participantId: 'b', amount: 500, percentage: 33.3 },
     ]);
+  });
+
+  it('picks a roulette participant from the payment-weighted range', () => {
+    const shares = calculateRouletteShares({ a: 800, b: 200 });
+    expect(pickWeightedParticipant(shares, 0.1)).toBe('a');
+    expect(pickWeightedParticipant(shares, 0.85)).toBe('b');
+    expect(pickWeightedParticipant(calculateRouletteShares({ a: 0, b: 0 }), 0.5)).toBeNull();
   });
 
   it('calculates mahjong settlement from scores, rate, uma, and chips', () => {
