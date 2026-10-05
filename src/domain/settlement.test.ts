@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateGameBalance, calculateRouletteShares, calculateSettlement, calculateTransfers, splitExpense } from './settlement';
+import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateSettlement, calculateTransfers, splitExpense } from './settlement';
 
 describe('settlement calculations', () => {
   it('splits an expense equally among selected participants', () => {
@@ -56,6 +56,20 @@ describe('settlement calculations', () => {
     expect(calculateRouletteShares({ a: 1000, b: 500 })).toEqual([
       { participantId: 'a', amount: 1000, percentage: 66.7 },
       { participantId: 'b', amount: 500, percentage: 33.3 },
+    ]);
+  });
+
+  it('calculates mahjong settlement from scores, rate, uma, and chips', () => {
+    expect(calculateMahjongBalances([
+      { participantId: 'a', points: 45000, chips: 2 },
+      { participantId: 'b', points: 35000, chips: 0 },
+      { participantId: 'c', points: 30000, chips: 1 },
+      { participantId: 'd', points: 30000, chips: 1 },
+    ], { startingPoints: 35000, rate: 50, uma: [20000, 10000, -10000, -20000], includeChips: true, chipValue: 100 })).toEqual([
+      { participantId: 'a', amount: 1600 },
+      { participantId: 'b', amount: 400 },
+      { participantId: 'c', amount: -750 },
+      { participantId: 'd', amount: -1250 },
     ]);
   });
 });

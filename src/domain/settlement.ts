@@ -1,4 +1,4 @@
-import type { Balance, ExpenseItem, GameBalanceStatus, RouletteShare, SettlementSummary, Transfer } from './model';
+import type { Balance, ExpenseItem, GameBalanceStatus, MahjongPlayerInput, MahjongSettings, RouletteShare, SettlementSummary, Transfer } from './model';
 
 type SplitInput = Pick<ExpenseItem, 'amount' | 'participantIds'>;
 
@@ -57,6 +57,17 @@ export function calculateTransfers(balances: Balance[]): Transfer[] {
 export function calculateGameBalance(values: number[]): GameBalanceStatus {
   const total = values.reduce((sum, value) => sum + value, 0);
   return { total, difference: Math.abs(total), isBalanced: total === 0 };
+}
+
+export function calculateMahjongBalances(players: MahjongPlayerInput[], settings: MahjongSettings): Balance[] {
+  const ranked = [...players].sort((left, right) => right.points - left.points);
+  const averageChips = players.length === 0 ? 0 : players.reduce((sum, player) => sum + player.chips, 0) / players.length;
+  return ranked.map((player, rank) => {
+    const pointBalance = ((player.points - settings.startingPoints) / 1000) * settings.rate;
+    const umaBalance = ((settings.uma[rank] ?? 0) / 1000) * settings.rate;
+    const chipBalance = settings.includeChips ? (player.chips - averageChips) * settings.chipValue : 0;
+    return { participantId: player.participantId, amount: Math.round(pointBalance + umaBalance + chipBalance) };
+  }).sort((left, right) => players.findIndex((player) => player.participantId === left.participantId) - players.findIndex((player) => player.participantId === right.participantId));
 }
 
 export function calculateRouletteShares(amounts: Record<string, number>): RouletteShare[] {

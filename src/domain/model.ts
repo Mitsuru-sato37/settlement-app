@@ -42,3 +42,17 @@ export type RouletteShare = {
   amount: number;
   percentage: number;
 };
+
+export type MahjongPlayerInput = {
+  participantId: string;
+  points: number;
+  chips: number;
+};
+
+export type MahjongSettings = {
+  startingPoints: number;
+  rate: number;
+  uma: number[];
+  includeChips: boolean;
+  chipValue: number;
+};
