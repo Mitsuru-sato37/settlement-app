@@ -1,0 +1,1 @@
+export function StatCard({ label, value, meta, accent = false }: { label: string; value: string; meta?: string; accent?: boolean }) { return <div className={`stat-card ${accent ? 'accent' : ''}`}><span className="eyebrow">{label}</span><strong>{value}</strong>{meta && <small>{meta}</small>}</div>; }
