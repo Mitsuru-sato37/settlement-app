@@ -20,6 +20,11 @@ describe('mahjong view', () => {
       };
 
       await clickButton('麻雀');
+      const addMatchButton = [...container.querySelectorAll('.mahjong-records button')].find((button) => button.textContent?.includes('半荘を追加'));
+      const firstMatch = container.querySelector('.mahjong-records .match-card');
+      expect(addMatchButton).toBeDefined();
+      expect(firstMatch).not.toBeNull();
+      expect(addMatchButton!.compareDocumentPosition(firstMatch!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       await clickButton('半荘を追加');
 
       const summary = [...container.querySelectorAll('h2')].find((heading) => heading.textContent === '現時点での集計');
