@@ -71,6 +71,15 @@ describe('settlement calculations', () => {
     expect(calculateRouletteTargetRotation(0, shares, 'b')).toBe(2196);
   });
 
+  it('keeps the selected segment under the pointer across consecutive spins', () => {
+    const shares = calculateRouletteShares({ a: 12000, b: 8500, c: 6500, d: 3000 });
+    const firstRotation = calculateRouletteTargetRotation(0, shares, 'b');
+    expect(firstRotation).not.toBeNull();
+    const secondRotation = calculateRouletteTargetRotation(firstRotation!, shares, 'c');
+    expect(secondRotation).not.toBeNull();
+    expect(((secondRotation! % 360) + 285) % 360).toBe(0);
+  });
+
   it('calculates mahjong settlement from scores, rate, uma, and chips', () => {
     expect(calculateMahjongBalances([
       { participantId: 'a', points: 45000, chips: 2 },

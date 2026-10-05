@@ -100,5 +100,8 @@ export function calculateRouletteTargetRotation(currentRotation: number, shares:
   const selectedStart = shares.slice(0, selectedIndex).reduce((sum, share) => sum + share.amount, 0);
   const selectedAmount = shares[selectedIndex]?.amount ?? 0;
   const selectedMidpoint = ((selectedStart + selectedAmount / 2) / total) * 360;
-  return currentRotation + 2160 + (360 - selectedMidpoint);
+  const targetAngle = (360 - selectedMidpoint) % 360;
+  const currentAngle = ((currentRotation % 360) + 360) % 360;
+  const forwardAdjustment = (targetAngle - currentAngle + 360) % 360;
+  return currentRotation + 2160 + forwardAdjustment;
 }
