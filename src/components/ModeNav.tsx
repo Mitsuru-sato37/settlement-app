@@ -8,7 +8,7 @@ export function ModeNav({ activeMode, onChange }: Props) {
   return <aside className="sidebar">
     <div className="brand"><span className="brand-mark">↗</span><span>settlement</span></div>
     <div className="workspace"><span className="workspace-dot" />週末キャンプ <span className="chevron">⌄</span></div>
-    <p className="nav-label">精算モード</p>
+    <p className="nav-label">この精算のモード</p>
     <nav>
       {(Object.keys(modeInfo) as SettlementMode[]).map((mode) => (
         <button className={`nav-item ${activeMode === mode ? 'active' : ''}`} key={mode} onClick={() => onChange(mode)}>
