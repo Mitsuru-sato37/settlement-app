@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, pickWeightedParticipant } from './domain/settlement';
 import type { ExpenseItem, MahjongPlayerInput, MahjongSettings, SettlementMode } from './domain/model';
 import { defaultExpenses, gameNotes, modeInfo, participants as initialParticipants } from './data';
@@ -83,8 +83,13 @@ function RoulettePanel({ participants }: { participants: typeof initialParticipa
   const [winnerId, setWinnerId] = useState<string | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const pendingWinnerId = useRef<string | null>(null);
+  const spinFallbackTimer = useRef<number | null>(null);
   const [amounts, setAmounts] = useState<Record<string, number>>(() => Object.fromEntries(participants.map((participant, index) => [participant.id, [12000, 8500, 6500, 3000][index] ?? 0])));
   useEffect(() => setAmounts((current) => Object.fromEntries(participants.map((participant) => [participant.id, current[participant.id] ?? 0]))), [participants]);
+  useEffect(() => () => {
+    if (spinFallbackTimer.current !== null) window.clearTimeout(spinFallbackTimer.current);
+  }, []);
   const payer = participants.find((participant) => participant.id === winnerId);
   const shares = calculateRouletteShares(amounts);
   const total = shares.reduce((sum, share) => sum + share.amount, 0);
@@ -100,22 +105,33 @@ function RoulettePanel({ participants }: { participants: typeof initialParticipa
     setAmounts((current) => ({ ...current, [participantId]: Math.max(0, Number(value) || 0) }));
     setWinnerId(null);
   };
+  const finishSpin = () => {
+    const selectedId = pendingWinnerId.current;
+    if (selectedId === null) return;
+    pendingWinnerId.current = null;
+    if (spinFallbackTimer.current !== null) window.clearTimeout(spinFallbackTimer.current);
+    spinFallbackTimer.current = null;
+    setWinnerId(selectedId);
+    setSpinning(false);
+  };
   const spin = () => {
     if (spinning || total === 0) return;
     const selectedId = pickWeightedParticipant(shares, Math.random());
     if (!selectedId) return;
     const nextRotation = calculateRouletteTargetRotation(rotation, shares, selectedId);
     if (nextRotation === null) return;
+    pendingWinnerId.current = selectedId;
     setRotation(nextRotation);
     setSpinning(true);
-    window.setTimeout(() => {
-      setWinnerId(selectedId);
-      setSpinning(false);
-    }, 2800);
+    spinFallbackTimer.current = window.setTimeout(finishSpin, 4000);
   };
   return <section className="card roulette-card">
-    <span className="roulette-pointer" aria-hidden="true">▼</span>
-    <div className={`roulette-wheel ${spinning ? 'spinning' : ''}`} style={{ background: wheelBackground, transform: `rotate(${rotation}deg)` }}><span>◉</span></div>
+    <div className="roulette-stage">
+      <span className="roulette-pointer" aria-hidden="true">▼</span>
+      <div className="roulette-wheel" onTransitionEnd={(event) => {
+        if (event.target === event.currentTarget && event.propertyName === 'transform') finishSpin();
+      }} style={{ background: wheelBackground, transform: `rotate(${rotation}deg)` }}><span>◉</span></div>
+    </div>
     <span className="eyebrow">今夜の支払い担当</span>
     <h2>{spinning ? 'ルーレットが回っています…' : payer ? `${payer.name} が全額お支払い` : 'ルーレットを回して支払者を決定'}</h2>
     <p>支払額が多い人ほど、ホイールの面積と当選確率が大きくなります。</p>
