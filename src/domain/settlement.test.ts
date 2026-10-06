@@ -1,11 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, finalizeBalances, pickWeightedParticipant, splitExpense } from './settlement';
+import { calculateGameBalance, calculateMahjongBalances, calculateNormalCase, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, finalizeBalances, pickWeightedParticipant, splitExpense } from './settlement';
+import { createCase } from './cases';
+import type { NormalCase } from './model';
 
 describe('settlement calculations', () => {
   it('does not suggest payments for unbalanced results', () => {
     expect(finalizeBalances([{ participantId: 'a', amount: 1 }], [])).toEqual({
       balances: [{ participantId: 'a', amount: 1 }], transfers: [], issues: expect.any(Array), difference: 1,
     });
+  });
+
+  it('rejects an expense with no recipients or an unknown payer', () => {
+    const value = createCase('normal', '旅行', 'n1', 'now') as NormalCase;
+    value.participants = [{ id: 'a', name: 'A', initials: 'A', color: '#fff' }];
+    value.expenses = [{ id: 'e1', label: '食事', amount: 1000, payerId: 'a', participantIds: [] }];
+    expect(calculateNormalCase(value).transfers).toEqual([]);
+    expect(calculateNormalCase(value).issues).toContain('食事: 対象者を選んでください');
+    value.expenses[0].participantIds = ['a']; value.expenses[0].payerId = 'missing';
+    expect(calculateNormalCase(value).issues).toContain('食事: 支払者が見つかりません');
   });
   it('splits an expense equally among selected participants', () => {
     expect(splitExpense({ amount: 3000, participantIds: ['a', 'b', 'c'] })).toEqual([
