@@ -29,6 +29,18 @@ describe('settlement calculations', () => {
     expect(calculateNormalCase(value).issues).toContain('明細1: 名称を入力してください');
   });
 
+  it('does not settle a normal record whose valid line items overflow the safe yen total', () => {
+    const value = createCase('normal', '旅行', 'n1', 'now') as NormalCase;
+    value.participants = [{ id: 'a', name: 'A', initials: 'A', color: '#fff' }, { id: 'b', name: 'B', initials: 'B', color: '#fff' }];
+    value.expenses = [
+      { id: 'e1', label: '宿', amount: Number.MAX_SAFE_INTEGER, payerId: 'a', participantIds: ['a', 'b'] },
+      { id: 'e2', label: '食事', amount: 2, payerId: 'b', participantIds: ['a', 'b'] },
+    ];
+    const result = calculateNormalCase(value);
+    expect(result.issues).toContain('合計金額が円の安全な範囲を超えています');
+    expect(result.transfers).toEqual([]);
+  });
+
   it('settles poker only when all final balances sum to zero', () => {
     const value = createCase('poker', '対局', 'p1', 'now') as PokerCase;
     value.participants = [{ id: 'a', name: 'A', initials: 'A', color: '#fff' }, { id: 'b', name: 'B', initials: 'B', color: '#fff' }];
@@ -99,6 +111,18 @@ describe('settlement calculations', () => {
     expect(pickWeightedParticipant(shares, 0.1)).toBe('a');
     expect(pickWeightedParticipant(shares, 0.85)).toBe('b');
     expect(pickWeightedParticipant(calculateRouletteShares({ a: 0, b: 0 }), 0.5)).toBeNull();
+  });
+
+  it('refuses to return a rounded total from the shared settlement calculator', () => {
+    expect(() => calculateSettlement([
+      { id: 'e1', label: '宿', amount: Number.MAX_SAFE_INTEGER, payerId: 'a', participantIds: ['a', 'b'] },
+      { id: 'e2', label: '食事', amount: 2, payerId: 'b', participantIds: ['a', 'b'] },
+    ], ['a', 'b'])).toThrow(RangeError);
+  });
+
+  it('lets a one-yen final slice win when another slice is one million yen', () => {
+    const shares = calculateRouletteShares({ a: 1_000_000, b: 1 });
+    expect(pickWeightedParticipant(shares, 0.9999995)).toBe('b');
   });
 
   it('never selects a zero-yen candidate and centers a boundary selection on its color', () => {

@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STORAGE_KEY } from './storage/caseStorage';
+import { addCase, createCase, createEmptyStore } from './domain/cases';
 import App from './App';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -24,6 +25,13 @@ async function input(label: string, text: string) {
   const field = container!.querySelector<HTMLInputElement>(`[aria-label="${label}"]`);
   expect(field, label).not.toBeNull();
   await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, text); field!.dispatchEvent(new Event('input', { bubbles: true })); });
+}
+async function reload() {
+  await act(async () => root!.unmount()); root = undefined;
+  await mount();
+}
+async function addPeople(names: string[]) {
+  for (const name of names) { await input('参加者名', name); await click('参加者を追加'); }
 }
 
 describe('practical settlement app', () => {
@@ -82,5 +90,60 @@ describe('practical settlement app', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe('{broken');
     await click('記録を作成');
     expect(localStorage.getItem(STORAGE_KEY)).toBe('{broken');
+  });
+
+  it('saves an imported backup even when the original browser data was unreadable', async () => {
+    localStorage.setItem(STORAGE_KEY, '{broken');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const screen = await mount();
+    const backup = addCase(createEmptyStore(), createCase('normal', '復元した旅行', 'restored', 'now'));
+    const field = screen.querySelector<HTMLInputElement>('input[type=file]')!;
+    Object.defineProperty(field, 'files', { value: [new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' })] });
+    await act(async () => { field.dispatchEvent(new Event('change', { bubbles: true })); await new Promise((resolve) => setTimeout(resolve, 30)); });
+    expect(screen.textContent).toContain('復元した旅行');
+    expect(screen.textContent).not.toContain('保存データを読み込めません');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!)).toEqual(backup);
+  });
+
+  it('restores poker entries and the concrete transfer after reopening', async () => {
+    await mount(); await click('ポーカーを作成'); await addPeople(['あき', 'びん']);
+    await input('あきの収支', '1200'); await input('びんの収支', '-1200');
+    expect(container!.querySelector('.transfer-row')?.textContent).toContain('¥1,200');
+    await reload();
+    expect(container!.querySelector<HTMLInputElement>('[aria-label="びんの収支"]')?.value).toBe('-1200');
+    expect(container!.querySelector('.transfer-row')?.textContent).toContain('¥1,200');
+  });
+
+  it('restores equal noriumi settlement after reopening', async () => {
+    await mount(); await click('ノリ打ちを作成'); await addPeople(['あき', 'びん']);
+    await input('あきの投資額', '1000'); await input('あきの回収額', '2000'); await input('びんの投資額', '1000');
+    expect(container!.querySelector('.transfer-row')?.textContent).toContain('¥1,000');
+    await reload();
+    expect(container!.querySelector<HTMLInputElement>('[aria-label="あきの回収額"]')?.value).toBe('2000');
+    expect(container!.querySelector('.transfer-row')?.textContent).toContain('¥1,000');
+  });
+
+  it('restores a mahjong hanchan and its cumulative transfer after reopening', async () => {
+    await mount(); await click('麻雀を作成'); await addPeople(['あき', 'びん', 'ちえ', 'だい']);
+    await click('半荘を追加');
+    await input('半荘1 席1の点数', '40000'); await input('半荘1 席2の点数', '10000');
+    expect(container!.querySelector('.mahjong-summary .transfer-row')).not.toBeNull();
+    await reload();
+    expect(container!.querySelector<HTMLInputElement>('[aria-label="半荘1 席1の点数"]')?.value).toBe('40000');
+    expect(container!.querySelector('.mahjong-summary .transfer-row')).not.toBeNull();
+  });
+
+  it('restores roulette amounts, winner, and wheel angle after reopening', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    await mount(); await click('全額払いルーレットを作成'); await addPeople(['あき', 'びん']);
+    await input('あきの支払額', '100'); await input('びんの支払額', '100');
+    await click('ルーレットを回す');
+    const wheel = container!.querySelector('.roulette-wheel')!;
+    await act(async () => { const event = new Event('transitionend', { bubbles: true }); Object.defineProperty(event, 'propertyName', { value: 'transform' }); wheel.dispatchEvent(event); });
+    expect(container!.textContent).toContain('びん が全額お支払い');
+    const angle = wheel.getAttribute('style');
+    await reload();
+    expect(container!.textContent).toContain('びん が全額お支払い');
+    expect(container!.querySelector('.roulette-wheel')?.getAttribute('style')).toBe(angle);
   });
 });

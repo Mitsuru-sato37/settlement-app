@@ -23,18 +23,33 @@ function validAmounts(value: unknown, ids: Set<string>, signed: boolean): boolea
   return record(value) && Object.entries(value).every(([id, amount]) => ids.has(id) && (signed ? integer(amount) : nonnegative(amount)));
 }
 
+function validRouletteResult(amounts: Record<string, unknown>, participantIds: string[], winnerId: string | null, rotation: number): boolean {
+  if (winnerId === null) return true;
+  const total = participantIds.reduce((sum, id) => sum + Number(amounts[id] ?? 0), 0);
+  if (!Number.isSafeInteger(total) || total <= 0) return false;
+  const pointer = ((-rotation % 360) + 360) % 360;
+  let start = 0;
+  for (const id of participantIds) {
+    const end = start + Number(amounts[id] ?? 0) / total * 360;
+    if (id === winnerId) return end > start && pointer >= start && pointer < end;
+    start = end;
+  }
+  return false;
+}
+
 function validCase(value: unknown): boolean {
   if (!record(value) || !nonempty(value.id) || !nonempty(value.title) || !nonempty(value.createdAt) || !nonempty(value.updatedAt) || !validParticipants(value.participants)) return false;
   const ids = new Set(value.participants.map((person) => person.id as string));
   if (value.mode === 'normal') {
-    return Array.isArray(value.expenses) && value.expenses.every((expense) => record(expense) && nonempty(expense.id) && nonempty(expense.label) && nonnegative(expense.amount)
+    return Array.isArray(value.expenses) && value.expenses.every((expense) => record(expense) && nonempty(expense.id) && typeof expense.label === 'string' && nonnegative(expense.amount)
       && typeof expense.payerId === 'string' && (expense.payerId === '' || ids.has(expense.payerId))
       && Array.isArray(expense.participantIds) && expense.participantIds.every((id: unknown) => typeof id === 'string' && ids.has(id)) && unique(expense.participantIds))
       && unique(value.expenses.map((expense: Record<string, unknown>) => expense.id as string));
   }
   if (value.mode === 'poker') return validAmounts(value.amounts, ids, true);
   if (value.mode === 'noriumi') return record(value.entries) && Object.entries(value.entries).every(([id, entry]) => ids.has(id) && record(entry) && nonnegative(entry.investment) && nonnegative(entry.recovery));
-  if (value.mode === 'roulette') return validAmounts(value.amounts, ids, false) && (value.winnerId === null || (typeof value.winnerId === 'string' && ids.has(value.winnerId))) && finite(value.rotation);
+  if (value.mode === 'roulette') return validAmounts(value.amounts, ids, false) && (value.winnerId === null || (typeof value.winnerId === 'string' && ids.has(value.winnerId))) && finite(value.rotation)
+    && validRouletteResult(value.amounts as Record<string, unknown>, value.participants.map((person) => person.id as string), value.winnerId as string | null, value.rotation as number);
   if (value.mode === 'mahjong') {
     const count = value.playerCount;
     if (count !== 3 && count !== 4) return false;

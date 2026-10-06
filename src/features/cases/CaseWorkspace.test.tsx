@@ -42,6 +42,15 @@ describe('case workspace', () => {
     expect(view.store.cases[0].participants.map((person) => person.name)).toEqual(['あき']);
   });
 
+  it('does not replace a saved participant name with an empty one', async () => {
+    const view = await render();
+    await view.click('記録を作成');
+    await view.input('参加者名', 'あき'); await view.click('参加者を追加');
+    await view.input('あきの名前', '');
+    expect(view.store.cases[0].participants[0].name).toBe('あき');
+    expect(view.container.querySelector<HTMLInputElement>('[aria-label="あきの名前"]')?.value).toBe('あき');
+  });
+
   it('reports failed saves', async () => {
     const view = await render(createEmptyStore(), 'error');
     expect(view.container.textContent).toContain('保存できません');

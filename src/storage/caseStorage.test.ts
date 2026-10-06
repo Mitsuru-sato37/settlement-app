@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { addCase, createCase, createEmptyStore } from '../domain/cases';
-import type { NormalCase } from '../domain/model';
+import type { NormalCase, RouletteCase } from '../domain/model';
 import { exportCaseStore, loadCaseStore, parseCaseStore, saveCaseStore, STORAGE_KEY } from './caseStorage';
 
 const now = '2026-10-06T00:00:00.000Z';
@@ -39,6 +39,24 @@ describe('case storage', () => {
     normal.expenses[0].payerId = 'p1';
     normal.expenses[0].amount = 1.5;
     expect(parseCaseStore(JSON.stringify({ schemaVersion: 1, activeCaseId: 'c1', cases: [normal] })).ok).toBe(false);
+  });
+
+  it('preserves a temporarily blank expense label as an incomplete draft', () => {
+    const normal = createCase('normal', '旅行', 'c1', now) as NormalCase;
+    normal.participants = [{ id: 'p1', name: 'A', initials: 'A', color: '#fff' }];
+    normal.expenses = [{ id: 'e1', label: '', amount: 100, payerId: 'p1', participantIds: ['p1'] }];
+    const store = addCase(createEmptyStore(), normal);
+    expect(saveCaseStore(localStorage, store)).toEqual({ ok: true });
+    expect(loadCaseStore(localStorage)).toEqual({ ok: true, value: store });
+  });
+
+  it('rejects a roulette result when its pointer and named winner disagree', () => {
+    const roulette = createCase('roulette', '支払い', 'r1', now) as RouletteCase;
+    roulette.participants = [{ id: 'a', name: 'A', initials: 'A', color: '#f00' }, { id: 'b', name: 'B', initials: 'B', color: '#00f' }];
+    roulette.amounts = { a: 1, b: 1 };
+    roulette.winnerId = 'b';
+    roulette.rotation = 0;
+    expect(parseCaseStore(JSON.stringify({ schemaVersion: 1, activeCaseId: 'r1', cases: [roulette] })).ok).toBe(false);
   });
 
   it('reports failed writes without deleting the previous value', () => {

@@ -21,6 +21,9 @@ export function calculateNormalCase(value: NormalCase): SettlementResult {
     return before === issues.length;
   });
   const orderedItems = validItems.map((item) => ({ ...item, participantIds: value.participants.map((person) => person.id).filter((id) => item.participantIds.includes(id)) }));
+  if (orderedItems.reduce((sum, item) => sum + BigInt(item.amount), 0n) > BigInt(Number.MAX_SAFE_INTEGER)) {
+    return finalizeBalances(value.participants.map((person) => ({ participantId: person.id, amount: 0 })), [...issues, '合計金額が円の安全な範囲を超えています']);
+  }
   const summary = calculateSettlement(orderedItems, value.participants.map((person) => person.id));
   return finalizeBalances(summary.balances, issues);
 }
@@ -49,6 +52,10 @@ export function splitExpense({ amount, participantIds }: SplitInput): Balance[] 
 }
 
 export function calculateSettlement(items: ExpenseItem[], participantIds: string[]): SettlementSummary {
+  if (items.some((item) => !Number.isSafeInteger(item.amount) || item.amount < 0)
+    || items.reduce((sum, item) => sum + BigInt(item.amount), 0n) > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new RangeError('合計金額が円の安全な範囲を超えています');
+  }
   const balances = new Map(participantIds.map((participantId) => [participantId, 0]));
   let total = 0;
 
@@ -119,7 +126,12 @@ export function pickWeightedParticipant(shares: RouletteShare[], randomValue: nu
   const total = shares.reduce((sum, share) => sum + share.amount, 0);
   if (total <= 0) return null;
 
-  let cursor = Math.max(0, Math.min(0.999999, randomValue)) * total;
+  if (randomValue >= 1) {
+    for (let index = shares.length - 1; index >= 0; index -= 1) {
+      if (shares[index].amount > 0) return shares[index].participantId;
+    }
+  }
+  let cursor = Math.max(0, randomValue) * total;
   for (const share of shares) {
     cursor -= share.amount;
     if (cursor < 0) return share.participantId;

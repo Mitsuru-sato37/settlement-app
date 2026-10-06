@@ -44,4 +44,14 @@ describe('normal panel', () => {
     await view.click('明細 1 を削除');
     expect(view.value.expenses).toEqual([]);
   });
+
+  it('shows the exact total and no transfer when line items exceed safe-number arithmetic', async () => {
+    const view = await render();
+    await view.click('明細を追加'); await view.click('明細を追加');
+    await view.input('金額 1', String(Number.MAX_SAFE_INTEGER));
+    await view.input('金額 2', '2');
+    expect(view.container.querySelector('.normal-stats')?.textContent).toContain('9,007,199,254,740,993');
+    expect(view.container.textContent).toContain('合計金額が円の安全な範囲を超えています');
+    expect(view.container.querySelectorAll('.transfer-row')).toHaveLength(0);
+  });
 });

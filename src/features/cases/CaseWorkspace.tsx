@@ -4,12 +4,12 @@ import type { CaseStore, Participant, SettlementCase, SettlementMode } from '../
 import { modeInfo } from '../../data';
 import { exportCaseStore, parseCaseStore } from '../../storage/caseStorage';
 
-type Props = { store: CaseStore; onChange: (next: CaseStore) => void; saveStatus: 'saved' | 'error' | 'invalid'; defaultMode?: SettlementMode };
+type Props = { store: CaseStore; onChange: (next: CaseStore) => void; onImport?: (next: CaseStore) => void; saveStatus: 'saved' | 'error' | 'invalid'; defaultMode?: SettlementMode };
 const modes: SettlementMode[] = ['normal', 'poker', 'mahjong', 'noriumi', 'roulette'];
 const palette = ['#f6a623', '#5ad1c8', '#ff7d8e', '#8d83ff', '#4a9bdd', '#b58c6b'];
 function id() { return globalThis.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
 
-export function CaseWorkspace({ store, onChange, saveStatus, defaultMode = 'normal' }: Props) {
+export function CaseWorkspace({ store, onChange, onImport, saveStatus, defaultMode = 'normal' }: Props) {
   const [title, setTitle] = useState('');
   const [mode, setMode] = useState<SettlementMode>(defaultMode);
   useEffect(() => { setMode(defaultMode); }, [defaultMode]);
@@ -54,7 +54,7 @@ export function CaseWorkspace({ store, onChange, saveStatus, defaultMode = 'norm
     reader.onload = () => {
       const result = parseCaseStore(String(reader.result ?? ''));
       if (!result.ok) { setImportError(`読み込めません: ${result.error}`); return; }
-      if (window.confirm('現在の全記録を読み込んだ内容で上書きしますか？')) onChange(result.value);
+      if (window.confirm('現在の全記録を読み込んだ内容で上書きしますか？')) (onImport ?? onChange)(result.value);
     };
     reader.onerror = () => setImportError('読み込めません: ファイルを開けません');
     reader.readAsText(file);
@@ -77,7 +77,7 @@ export function CaseWorkspace({ store, onChange, saveStatus, defaultMode = 'norm
     <div className="case-list" aria-label="記録一覧">{store.cases.length === 0 ? <p>記録はまだありません。新しく作成してください。</p> : store.cases.map((item) => <button type="button" className={item.id === active?.id ? 'case-list-item active' : 'case-list-item'} key={item.id} onClick={() => onChange(selectCase(store, item.id))} aria-label={`${item.title}を開く`}>{item.title}<small>{modeInfo[item.mode].label}</small></button>)}</div>
     {active && <div className="case-current"><div className="case-current-heading"><h3>{active.title} <small>{modeInfo[active.mode].label}</small></h3><div><button type="button" className="outline-button" onClick={() => create(active.mode, true)}>サンプルを読み込む</button> <button type="button" className="remove-button" onClick={() => { if (window.confirm(`「${active.title}」を削除しますか？`)) onChange(removeCase(store, active.id)); }}>記録を削除</button></div></div>
       <div className="participant-add"><input aria-label="参加者名" placeholder="参加者名" value={personName} onChange={(event) => setPersonName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') addPerson(); }} /><button type="button" className="outline-button" onClick={addPerson}>参加者を追加</button></div>
-      {active.participants.length === 0 ? <p>参加者を追加してください。</p> : <div className="case-people">{active.participants.map((person) => <div className="case-person" key={person.id}><span className="avatar avatar-small" style={{ backgroundColor: person.color }}>{person.initials}</span><input aria-label={`${person.name}の名前`} value={person.name} onChange={(event) => { const name = event.target.value; updateActive({ ...active, participants: active.participants.map((item) => item.id === person.id ? { ...item, name, initials: name.slice(0, 2) } : item) }); }} /><button type="button" className="remove-button" aria-label={`${person.name}を削除`} onClick={() => removePerson(person)}>削除</button></div>)}</div>}
+      {active.participants.length === 0 ? <p>参加者を追加してください。</p> : <div className="case-people">{active.participants.map((person) => <div className="case-person" key={person.id}><span className="avatar avatar-small" style={{ backgroundColor: person.color }}>{person.initials}</span><input aria-label={`${person.name}の名前`} value={person.name} onChange={(event) => { const name = event.target.value; if (!name.trim()) return; updateActive({ ...active, participants: active.participants.map((item) => item.id === person.id ? { ...item, name, initials: name.slice(0, 2) } : item) }); }} /><button type="button" className="remove-button" aria-label={`${person.name}を削除`} onClick={() => removePerson(person)}>削除</button></div>)}</div>}
     </div>}
     <div className="case-backup"><button type="button" className="outline-button" onClick={download}>JSON を書き出す</button><label className="outline-button">JSON を読み込む<input type="file" accept=".json,application/json" onChange={readImport} /></label></div>
     {importError && <p className="form-error" role="alert">{importError}</p>}
