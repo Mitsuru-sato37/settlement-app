@@ -81,4 +81,20 @@ describe('case workspace', () => {
     expect(view.store.cases).toHaveLength(1);
     expect(view.container.textContent).toContain('読み込めません');
   });
+
+  it('replaces records only after a valid JSON import is confirmed', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const view = await render(addCase(createEmptyStore(), createCase('normal', '旅行', 'n1', now)));
+    const replacement = addCase(createEmptyStore(), createCase('poker', '対局', 'p1', now));
+    const upload = async () => {
+      const field = view.container.querySelector<HTMLInputElement>('input[type=file]')!;
+      Object.defineProperty(field, 'files', { value: [new File([JSON.stringify(replacement)], 'backup.json', { type: 'application/json' })], configurable: true });
+      await act(async () => { field.dispatchEvent(new Event('change', { bubbles: true })); await new Promise((resolve) => setTimeout(resolve, 20)); });
+    };
+    await upload();
+    expect(view.store.cases[0].title).toBe('旅行');
+    confirm.mockReturnValue(true);
+    await upload();
+    expect(view.store.cases[0].title).toBe('対局');
+  });
 });

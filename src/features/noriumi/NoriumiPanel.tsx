@@ -1,12 +1,17 @@
+import { useEffect, useState } from 'react';
 import { NumberField } from '../../components/NumberField';
 import { ResultPanel } from '../../components/ResultPanel';
 import type { NoriumiCase } from '../../domain/model';
 import { calculateNoriumiCase, splitEqualProfit } from '../../domain/noriumi';
 
-type Props = { value: NoriumiCase; onChange: (next: NoriumiCase) => void };
+type Props = { value: NoriumiCase; onChange: (next: NoriumiCase) => void; onDraftValidityChange?: (valid: boolean) => void };
 
-export function NoriumiPanel({ value, onChange }: Props) {
+export function NoriumiPanel({ value, onChange, onDraftValidityChange }: Props) {
+  const [invalid, setInvalid] = useState<Record<string, boolean>>({});
   const result = calculateNoriumiCase(value);
+  const hasInvalid = value.participants.some((person) => invalid[`${person.id}:investment`] || invalid[`${person.id}:recovery`]);
+  useEffect(() => { onDraftValidityChange?.(!hasInvalid); }, [hasInvalid, onDraftValidityChange]);
+  const validity = (key: string, valid: boolean) => setInvalid((current) => ({ ...current, [key]: !valid }));
   const total = value.participants.reduce((sum, person) => {
     const entry = value.entries[person.id] ?? { investment: 0, recovery: 0 };
     return sum + entry.recovery - entry.investment;
@@ -17,9 +22,9 @@ export function NoriumiPanel({ value, onChange }: Props) {
     <p className="section-description">全員の損益を均等に分けます。端数の 1 円は表示順で配ります。</p>
     <div className="noriumi-head"><span>参加者</span><span>投資額</span><span>回収額</span><span>均等取り分</span></div>
     {value.participants.length === 0 ? <p>参加者を追加してください。</p> : value.participants.map((person, index) => <div className="noriumi-row" key={person.id}><strong>{person.name}</strong>
-      <NumberField label={`${person.name}の投資額`} value={value.entries[person.id]?.investment ?? 0} onChange={(investment) => update(person.id, { investment })} />
-      <NumberField label={`${person.name}の回収額`} value={value.entries[person.id]?.recovery ?? 0} onChange={(recovery) => update(person.id, { recovery })} />
+      <NumberField label={`${person.name}の投資額`} value={value.entries[person.id]?.investment ?? 0} onChange={(investment) => update(person.id, { investment })} onValidityChange={(valid) => validity(`${person.id}:investment`, valid)} />
+      <NumberField label={`${person.name}の回収額`} value={value.entries[person.id]?.recovery ?? 0} onChange={(recovery) => update(person.id, { recovery })} onValidityChange={(valid) => validity(`${person.id}:recovery`, valid)} />
       <span>¥{shares[index]?.toLocaleString('ja-JP') ?? 0}</span></div>)}
     <div className="game-total"><span>全体損益</span><strong>¥{total.toLocaleString('ja-JP')}</strong></div>
-  </section><ResultPanel balances={result.balances} participants={value.participants} transfers={result.transfers} issues={result.issues} title="均等精算の結果" /></div>;
+  </section><ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} issues={hasInvalid ? [...result.issues, '入力中の数値を修正してください'] : result.issues} title="均等精算の結果" /></div>;
 }

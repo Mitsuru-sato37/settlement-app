@@ -43,6 +43,10 @@ describe('roulette panel', () => {
     await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '900'); input.dispatchEvent(new Event('input', { bubbles: true })); });
     expect(view.value.winnerId).toBeNull();
     expect(view.container.textContent).not.toContain('びん が全額お支払い');
+    const invalidInput = view.container.querySelector<HTMLInputElement>('[aria-label="あきの支払額"]')!;
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(invalidInput, 'oops'); invalidInput.dispatchEvent(new Event('input', { bubbles: true })); });
+    expect(view.container.querySelector<HTMLButtonElement>('.roulette-card .primary-button')?.disabled).toBe(true);
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(invalidInput, '900'); invalidInput.dispatchEvent(new Event('input', { bubbles: true })); });
     await view.click();
     expect(view.value.rotation).toBeGreaterThan(2196);
   });

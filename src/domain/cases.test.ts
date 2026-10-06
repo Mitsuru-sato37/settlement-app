@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addCase, createCase, createEmptyStore, removeCase, selectCase } from './cases';
+import { addCase, createCase, createEmptyStore, createSampleCase, removeCase, selectCase } from './cases';
+import { calculateMahjongCase } from './mahjong';
 
 const now = '2026-10-06T00:00:00.000Z';
 
@@ -23,5 +24,13 @@ describe('settlement cases', () => {
     expect(selectCase(store, 'missing')).toBe(store);
     expect(store.cases[0]).toBe(normal);
     expect(removeCase(store, 'c2').cases).toEqual([normal]);
+  });
+
+  it('loads a playable mahjong sample only on explicit request', () => {
+    const sample = createSampleCase('mahjong', 'sample', now);
+    expect(sample.mode).toBe('mahjong');
+    if (sample.mode !== 'mahjong') return;
+    expect(sample.matches).toHaveLength(1);
+    expect(calculateMahjongCase(sample).issues).toEqual([]);
   });
 });

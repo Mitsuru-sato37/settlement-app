@@ -47,4 +47,12 @@ describe('mahjong settlement', () => {
     expect(result.difference).toBe(0);
     expect(result.balances.reduce((sum, item) => sum + item.amount, 0)).toBe(0);
   });
+
+  it('never exposes non-finite yen when an extreme custom rate overflows', () => {
+    const settings = { ...defaultMahjongSettings(4), rate: Number.MAX_VALUE };
+    const result = calculateMahjongMatch(match(['a', 'b', 'c', 'd'], [40000, 30000, 20000, 10000]), settings, 4);
+    expect(result.transfers).toEqual([]);
+    expect(result.issues.length).toBeGreaterThan(0);
+    expect(result.balances.every((item) => Number.isSafeInteger(item.amount))).toBe(true);
+  });
 });

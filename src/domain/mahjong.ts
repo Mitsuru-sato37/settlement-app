@@ -33,6 +33,10 @@ export function calculateMahjongMatch(match: MahjongMatch, settings: MahjongSett
     const chipAmount = settings.includeChips ? (player.chips - averageChips) * settings.chipValue : 0;
     return { participantId: player.participantId, amount: points * settings.rate / 1000 + chipAmount };
   });
+  if (raw.some((item) => !Number.isFinite(item.amount) || !Number.isSafeInteger(Math.round(item.amount)))
+    || !Number.isSafeInteger(Math.round(raw.reduce((sum, item) => sum + item.amount, 0)))) {
+    return finalizeBalances(match.players.map((player) => ({ participantId: player.participantId, amount: 0 })), ['計算結果が円の安全な範囲を超えています']);
+  }
   return finalizeBalances(roundBalances(raw), []);
 }
 
@@ -46,5 +50,6 @@ export function calculateMahjongCase(value: MahjongCase): SettlementResult {
     if (result.issues.length > 0) issues.push(...result.issues.map((issue) => `${match.label}: ${issue}`));
     else for (const balance of result.balances) amounts.set(balance.participantId, (amounts.get(balance.participantId) ?? 0) + balance.amount);
   }
-  return finalizeBalances(value.participants.map((person) => ({ participantId: person.id, amount: amounts.get(person.id) ?? 0 })), issues);
+  if ([...amounts.values()].some((amount) => !Number.isSafeInteger(amount))) issues.push('累計金額が円の安全な範囲を超えています');
+  return finalizeBalances(value.participants.map((person) => ({ participantId: person.id, amount: Number.isSafeInteger(amounts.get(person.id)) ? amounts.get(person.id)! : 0 })), issues);
 }

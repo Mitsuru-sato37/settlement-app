@@ -27,5 +27,9 @@ describe('mahjong panel', () => {
     expect(heading.compareDocumentPosition(records) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const add = [...container.querySelectorAll('.mahjong-records button')].find((item) => item.textContent?.includes('半荘を追加'))!;
     expect(add.compareDocumentPosition(container.querySelector('.match-card')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelectorAll('.transfer-row').length).toBeGreaterThan(0);
+    const points = container.querySelector<HTMLInputElement>('[aria-label="半荘2 席1の点数"]')!;
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(points, 'oops'); points.dispatchEvent(new Event('input', { bubbles: true })); });
+    expect(container.querySelectorAll('.transfer-row')).toHaveLength(0);
   });
 });

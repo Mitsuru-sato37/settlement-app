@@ -24,5 +24,7 @@ describe('noriumi panel', () => {
     expect(value.entries).toEqual({ a: { investment: 1000, recovery: 2000 }, b: { investment: 1000, recovery: 0 } });
     expect(container.querySelector('.transfer-row')?.textContent).toContain('¥1,000');
     expect(container.textContent).toContain('均等取り分');
+    await input('あきの投資額', '');
+    expect(container.querySelectorAll('.transfer-row')).toHaveLength(0);
   });
 });

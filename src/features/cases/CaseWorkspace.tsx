@@ -1,17 +1,18 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { addCase, createCase, createSampleCase, removeCase, selectCase } from '../../domain/cases';
 import type { CaseStore, Participant, SettlementCase, SettlementMode } from '../../domain/model';
 import { modeInfo } from '../../data';
 import { exportCaseStore, parseCaseStore } from '../../storage/caseStorage';
 
-type Props = { store: CaseStore; onChange: (next: CaseStore) => void; saveStatus: 'saved' | 'error' };
+type Props = { store: CaseStore; onChange: (next: CaseStore) => void; saveStatus: 'saved' | 'error' | 'invalid'; defaultMode?: SettlementMode };
 const modes: SettlementMode[] = ['normal', 'poker', 'mahjong', 'noriumi', 'roulette'];
 const palette = ['#f6a623', '#5ad1c8', '#ff7d8e', '#8d83ff', '#4a9bdd', '#b58c6b'];
 function id() { return globalThis.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
 
-export function CaseWorkspace({ store, onChange, saveStatus }: Props) {
+export function CaseWorkspace({ store, onChange, saveStatus, defaultMode = 'normal' }: Props) {
   const [title, setTitle] = useState('');
-  const [mode, setMode] = useState<SettlementMode>('normal');
+  const [mode, setMode] = useState<SettlementMode>(defaultMode);
+  useEffect(() => { setMode(defaultMode); }, [defaultMode]);
   const [personName, setPersonName] = useState('');
   const [importError, setImportError] = useState('');
   const active = store.cases.find((item) => item.id === store.activeCaseId) ?? null;
@@ -48,6 +49,7 @@ export function CaseWorkspace({ store, onChange, saveStatus }: Props) {
     const file = event.target.files?.[0];
     if (!file) return;
     setImportError('');
+    if (file.size > 1024 * 1024) { setImportError('読み込めません: ファイルが 1 MiB を超えています'); event.target.value = ''; return; }
     const reader = new FileReader();
     reader.onload = () => {
       const result = parseCaseStore(String(reader.result ?? ''));
@@ -66,7 +68,7 @@ export function CaseWorkspace({ store, onChange, saveStatus }: Props) {
   };
 
   return <section className="case-workspace card" aria-label="記録と参加者">
-    <div className="case-workspace-heading"><div><h2>精算記録</h2><p>このブラウザに保存。データ消去に備えて JSON を書き出してください。</p></div><span className={saveStatus === 'error' ? 'save-error' : 'save-ok'} role="status">{saveStatus === 'error' ? '保存できません' : '保存済み'}</span></div>
+    <div className="case-workspace-heading"><div><h2>精算記録</h2><p>このブラウザに保存。データ消去に備えて JSON を書き出してください。</p></div><span className={saveStatus === 'saved' ? 'save-ok' : 'save-error'} role="status">{saveStatus === 'error' ? '保存できません' : saveStatus === 'invalid' ? '入力中・未保存' : '保存済み'}</span></div>
     <div className="case-create"><input aria-label="記録名" placeholder="記録名（例：旅行）" value={title} onChange={(event) => setTitle(event.target.value)} />
       <select aria-label="記録の種類" value={mode} onChange={(event) => setMode(event.target.value as SettlementMode)}>{modes.map((item) => <option key={item} value={item}>{modeInfo[item].label}</option>)}</select>
       <button type="button" className="primary-button" onClick={() => create()}>記録を作成</button>

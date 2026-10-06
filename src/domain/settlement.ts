@@ -10,15 +10,18 @@ export function finalizeBalances(balances: Balance[], issues: string[]): Settlem
 export function calculateNormalCase(value: NormalCase): SettlementResult {
   const ids = new Set(value.participants.map((person) => person.id));
   const issues: string[] = [];
-  const validItems = value.expenses.filter((item) => {
+  const validItems = value.expenses.filter((item, index) => {
     const before = issues.length;
-    if (!Number.isSafeInteger(item.amount) || item.amount < 0) issues.push(`${item.label}: 金額は0円以上の整数にしてください`);
-    if (!ids.has(item.payerId)) issues.push(`${item.label}: 支払者が見つかりません`);
-    if (item.participantIds.length === 0) issues.push(`${item.label}: 対象者を選んでください`);
-    if (item.participantIds.some((id) => !ids.has(id)) || new Set(item.participantIds).size !== item.participantIds.length) issues.push(`${item.label}: 対象者が正しくありません`);
+    const label = item.label.trim() || `明細${index + 1}`;
+    if (!item.label.trim()) issues.push(`${label}: 名称を入力してください`);
+    if (!Number.isSafeInteger(item.amount) || item.amount < 0) issues.push(`${label}: 金額は0円以上の整数にしてください`);
+    if (!ids.has(item.payerId)) issues.push(`${label}: 支払者が見つかりません`);
+    if (item.participantIds.length === 0) issues.push(`${label}: 対象者を選んでください`);
+    if (item.participantIds.some((id) => !ids.has(id)) || new Set(item.participantIds).size !== item.participantIds.length) issues.push(`${label}: 対象者が正しくありません`);
     return before === issues.length;
   });
-  const summary = calculateSettlement(validItems, value.participants.map((person) => person.id));
+  const orderedItems = validItems.map((item) => ({ ...item, participantIds: value.participants.map((person) => person.id).filter((id) => item.participantIds.includes(id)) }));
+  const summary = calculateSettlement(orderedItems, value.participants.map((person) => person.id));
   return finalizeBalances(summary.balances, issues);
 }
 

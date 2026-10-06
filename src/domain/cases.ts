@@ -44,7 +44,7 @@ export function createSampleCase(mode: SettlementMode, id: string, now: string):
   switch (base.mode) {
     case 'normal': return { ...base, participants: sampleParticipants, expenses: defaultExpenses.map((item) => ({ ...item, participantIds: [...item.participantIds] })) };
     case 'poker': return { ...base, participants: sampleParticipants, amounts: Object.fromEntries(participants.map((participant, index) => [participant.id, gameNotes.poker.balances[index]])) };
-    case 'mahjong': return { ...base, participants: sampleParticipants };
+    case 'mahjong': return { ...base, participants: sampleParticipants, matches: [{ id: `${id}-h1`, label: '半荘1', players: sampleParticipants.map((person, index) => ({ participantId: person.id, points: [40000, 30000, 20000, 10000][index], chips: 0 })) }], nextMatchNumber: 2 };
     case 'noriumi': return { ...base, participants: sampleParticipants, entries: Object.fromEntries(participants.map((participant, index) => [participant.id, { investment: 10000, recovery: [18500, 3000, 12000, 6500][index] }])) };
     case 'roulette': return { ...base, participants: sampleParticipants, amounts: { mitsu: 12000, ken: 8500, yuki: 6500, sato: 3000 } };
   }

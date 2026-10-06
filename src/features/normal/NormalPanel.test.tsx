@@ -36,6 +36,11 @@ describe('normal panel', () => {
     expect(view.container.textContent).toContain('びん');
     expect(view.container.textContent).toContain('¥500');
     expect(view.value.expenses[0].participantIds).toEqual(['a', 'b']);
+    await view.input('金額 1', 'abc');
+    expect(view.container.querySelectorAll('.transfer-row')).toHaveLength(0);
+    expect(view.container.textContent).toContain('入力中の数値');
+    await view.input('金額 1', '1000');
+    expect(view.container.querySelectorAll('.transfer-row')).toHaveLength(1);
     await view.click('明細 1 を削除');
     expect(view.value.expenses).toEqual([]);
   });

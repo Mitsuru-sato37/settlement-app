@@ -25,5 +25,7 @@ describe('poker panel', () => {
     await input('びんの収支', '-1200');
     expect(value.amounts).toEqual({ a: 1200, b: -1200 });
     expect(container.querySelector('.transfer-row')?.textContent).toContain('¥1,200');
+    await input('びんの収支', '-');
+    expect(container.querySelectorAll('.transfer-row')).toHaveLength(0);
   });
 });

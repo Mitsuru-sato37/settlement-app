@@ -20,6 +20,15 @@ describe('settlement calculations', () => {
     expect(calculateNormalCase(value).issues).toContain('食事: 支払者が見つかりません');
   });
 
+  it('uses participant display order for a one-yen remainder even if selection order differs', () => {
+    const value = createCase('normal', '旅行', 'n1', 'now') as NormalCase;
+    value.participants = ['a', 'b', 'c'].map((id) => ({ id, name: id, initials: id, color: '#fff' }));
+    value.expenses = [{ id: 'e1', label: '食事', amount: 1, payerId: 'a', participantIds: ['c', 'b', 'a'] }];
+    expect(calculateNormalCase(value).transfers).toEqual([]);
+    value.expenses[0].label = '';
+    expect(calculateNormalCase(value).issues).toContain('明細1: 名称を入力してください');
+  });
+
   it('settles poker only when all final balances sum to zero', () => {
     const value = createCase('poker', '対局', 'p1', 'now') as PokerCase;
     value.participants = [{ id: 'a', name: 'A', initials: 'A', color: '#fff' }, { id: 'b', name: 'B', initials: 'B', color: '#fff' }];
