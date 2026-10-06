@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 
-type Props = { value: number; onChange: (value: number) => void; label: string; min?: number; signed?: boolean; decimal?: boolean; className?: string };
+type Props = { value: number; onChange: (value: number) => void; label: string; min?: number; signed?: boolean; decimal?: boolean; disabled?: boolean; className?: string };
 
-export function NumberField({ value, onChange, label, min = 0, signed = false, decimal = false, className }: Props) {
+export function NumberField({ value, onChange, label, min = 0, signed = false, decimal = false, disabled = false, className }: Props) {
   const [draft, setDraft] = useState(String(value));
   useEffect(() => { setDraft(String(value)); }, [value]);
   const parsed = Number(draft);
   const pattern = decimal ? /^-?\d+(\.\d+)?$/ : /^-?\d+$/;
   const valid = draft.trim() !== '' && pattern.test(draft) && (decimal ? Number.isFinite(parsed) : Number.isSafeInteger(parsed)) && (signed || parsed >= min);
-  return <span className={className}><input aria-label={label} inputMode="numeric" value={draft} onChange={(event) => {
+  return <span className={className}><input aria-label={label} inputMode="numeric" disabled={disabled} value={draft} onChange={(event) => {
     const next = event.target.value; setDraft(next);
     const amount = Number(next);
     if (next.trim() !== '' && pattern.test(next) && (decimal ? Number.isFinite(amount) : Number.isSafeInteger(amount)) && (signed || amount >= min)) onChange(amount);

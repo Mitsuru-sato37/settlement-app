@@ -92,6 +92,16 @@ describe('settlement calculations', () => {
     expect(pickWeightedParticipant(calculateRouletteShares({ a: 0, b: 0 }), 0.5)).toBeNull();
   });
 
+  it('never selects a zero-yen candidate and centers a boundary selection on its color', () => {
+    const shares = calculateRouletteShares({ zero: 0, a: 1, b: 3 });
+    expect(pickWeightedParticipant(shares, 0)).toBe('a');
+    expect(pickWeightedParticipant(shares, 0.25)).toBe('b');
+    const rotation = calculateRouletteTargetRotation(0, shares, 'b')!;
+    const midpoint = (1 + 3 / 2) / 4 * 360;
+    expect((rotation + midpoint) % 360).toBeCloseTo(0);
+    expect(calculateRouletteTargetRotation(rotation, shares, 'a')!).toBeGreaterThan(rotation);
+  });
+
   it('calculates a stop rotation that centers the selected segment under the pointer', () => {
     const shares = calculateRouletteShares({ a: 800, b: 200 });
     expect(calculateRouletteTargetRotation(0, shares, 'b')).toBe(2196);
