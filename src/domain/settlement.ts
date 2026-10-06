@@ -1,4 +1,4 @@
-import type { Balance, ExpenseItem, GameBalanceStatus, MahjongPlayerInput, MahjongSettings, NormalCase, RouletteShare, SettlementResult, SettlementSummary, Transfer } from './model';
+import type { Balance, ExpenseItem, GameBalanceStatus, MahjongPlayerInput, MahjongSettings, NormalCase, PokerCase, RouletteShare, SettlementResult, SettlementSummary, Transfer } from './model';
 
 export function finalizeBalances(balances: Balance[], issues: string[]): SettlementResult {
   const difference = Math.abs(balances.reduce((sum, balance) => sum + balance.amount, 0));
@@ -20,6 +20,17 @@ export function calculateNormalCase(value: NormalCase): SettlementResult {
   });
   const summary = calculateSettlement(validItems, value.participants.map((person) => person.id));
   return finalizeBalances(summary.balances, issues);
+}
+
+export function calculatePokerCase(value: PokerCase): SettlementResult {
+  const issues: string[] = [];
+  if (value.participants.length === 0) issues.push('参加者を追加してください');
+  const balances = value.participants.map((person) => {
+    const amount = value.amounts[person.id] ?? 0;
+    if (!Number.isSafeInteger(amount)) issues.push(`${person.name}: 収支は整数円で入力してください`);
+    return { participantId: person.id, amount: Number.isSafeInteger(amount) ? amount : 0 };
+  });
+  return finalizeBalances(balances, issues);
 }
 
 type SplitInput = Pick<ExpenseItem, 'amount' | 'participantIds'>;

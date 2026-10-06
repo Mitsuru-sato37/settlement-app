@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { calculateGameBalance, calculateMahjongBalances, calculateNormalCase, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, finalizeBalances, pickWeightedParticipant, splitExpense } from './settlement';
+import { calculateGameBalance, calculateMahjongBalances, calculateNormalCase, calculatePokerCase, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, finalizeBalances, pickWeightedParticipant, splitExpense } from './settlement';
 import { createCase } from './cases';
-import type { NormalCase } from './model';
+import type { NormalCase, PokerCase } from './model';
 
 describe('settlement calculations', () => {
   it('does not suggest payments for unbalanced results', () => {
@@ -18,6 +18,15 @@ describe('settlement calculations', () => {
     expect(calculateNormalCase(value).issues).toContain('食事: 対象者を選んでください');
     value.expenses[0].participantIds = ['a']; value.expenses[0].payerId = 'missing';
     expect(calculateNormalCase(value).issues).toContain('食事: 支払者が見つかりません');
+  });
+
+  it('settles poker only when all final balances sum to zero', () => {
+    const value = createCase('poker', '対局', 'p1', 'now') as PokerCase;
+    value.participants = [{ id: 'a', name: 'A', initials: 'A', color: '#fff' }, { id: 'b', name: 'B', initials: 'B', color: '#fff' }];
+    value.amounts = { a: 1200, b: -1200 };
+    expect(calculatePokerCase(value).transfers).toEqual([{ fromId: 'b', toId: 'a', amount: 1200 }]);
+    value.amounts.b = -1000;
+    expect(calculatePokerCase(value)).toMatchObject({ difference: 200, transfers: [] });
   });
   it('splits an expense equally among selected participants', () => {
     expect(splitExpense({ amount: 3000, participantIds: ['a', 'b', 'c'] })).toEqual([

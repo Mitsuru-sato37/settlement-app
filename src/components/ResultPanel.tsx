@@ -15,7 +15,7 @@ export function ResultPanel({ balances, participants, transfers = [], title = '�
   return <section className="result-panel card">
     <div className="section-heading">
       <div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2></div>
-      {issues.length > 0 ? <span className="balance-status is-unbalanced">未確定</span> : status
+      {status && !status.isBalanced ? <span className="balance-status is-unbalanced">差額 ¥{status.difference.toLocaleString('ja-JP')}</span> : issues.length > 0 ? <span className="balance-status is-unbalanced">未確定</span> : status
         ? <div className={`balance-status ${status.isBalanced ? 'is-balanced' : 'is-unbalanced'}`}><span>{status.isBalanced ? '✓' : '!'}</span>{status.isBalanced ? '収支一致' : `差額 ¥${status.difference.toLocaleString('ja-JP')}`}</div>
         : <span className="settled-badge">● 計算済み</span>}
     </div>
