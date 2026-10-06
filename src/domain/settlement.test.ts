@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, pickWeightedParticipant, splitExpense } from './settlement';
+import { calculateGameBalance, calculateMahjongBalances, calculateRouletteShares, calculateRouletteTargetRotation, calculateSettlement, calculateTransfers, finalizeBalances, pickWeightedParticipant, splitExpense } from './settlement';
 
 describe('settlement calculations', () => {
+  it('does not suggest payments for unbalanced results', () => {
+    expect(finalizeBalances([{ participantId: 'a', amount: 1 }], [])).toEqual({
+      balances: [{ participantId: 'a', amount: 1 }], transfers: [], issues: expect.any(Array), difference: 1,
+    });
+  });
   it('splits an expense equally among selected participants', () => {
     expect(splitExpense({ amount: 3000, participantIds: ['a', 'b', 'c'] })).toEqual([
       { participantId: 'a', amount: 1000 },

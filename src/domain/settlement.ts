@@ -1,4 +1,11 @@
-import type { Balance, ExpenseItem, GameBalanceStatus, MahjongPlayerInput, MahjongSettings, RouletteShare, SettlementSummary, Transfer } from './model';
+import type { Balance, ExpenseItem, GameBalanceStatus, MahjongPlayerInput, MahjongSettings, RouletteShare, SettlementResult, SettlementSummary, Transfer } from './model';
+
+export function finalizeBalances(balances: Balance[], issues: string[]): SettlementResult {
+  const difference = Math.abs(balances.reduce((sum, balance) => sum + balance.amount, 0));
+  const allIssues = [...issues];
+  if (difference !== 0) allIssues.push(`収支が ${difference} 円一致していません`);
+  return { balances, transfers: allIssues.length === 0 ? calculateTransfers(balances) : [], issues: allIssues, difference };
+}
 
 type SplitInput = Pick<ExpenseItem, 'amount' | 'participantIds'>;
 
