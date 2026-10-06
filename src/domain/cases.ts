@@ -3,8 +3,8 @@ import type { CaseStore, MahjongSettings, SettlementCase, SettlementMode } from 
 
 export function defaultMahjongSettings(playerCount: 3 | 4): MahjongSettings {
   return playerCount === 4
-    ? { startingPoints: 25000, returnPoints: 30000, rate: 50, oka: 20000, uma: [20000, 10000, -10000, -20000], includeChips: false, chipValue: 100 }
-    : { startingPoints: 35000, returnPoints: 40000, rate: 50, oka: 15000, uma: [20000, 0, -20000], includeChips: false, chipValue: 100 };
+    ? { startingPoints: 25000, returnPoints: 30000, rate: 50, uma: [20000, 10000, -10000, -20000], includeChips: false, chipValue: 100 }
+    : { startingPoints: 35000, returnPoints: 40000, rate: 50, uma: [20000, 0, -20000], includeChips: false, chipValue: 100 };
 }
 
 export function createEmptyStore(): CaseStore {

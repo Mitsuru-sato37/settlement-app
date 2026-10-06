@@ -11,6 +11,7 @@ function id() { return globalThis.crypto?.randomUUID?.() ?? `h-${Date.now()}-${M
 export function MahjongPanel({ value, onChange, onDraftValidityChange }: Props) {
   const [invalid, setInvalid] = useState<Record<string, boolean>>({});
   const result = calculateMahjongCase(value);
+  const automaticTopUp = (value.settings.returnPoints - value.settings.startingPoints) * value.playerCount;
   const hasInvalid = Object.entries(invalid).some(([key, isInvalid]) => isInvalid && (key.startsWith('rule:') || value.matches.some((match) => key.startsWith(`${match.id}:`))));
   useEffect(() => { onDraftValidityChange?.(!hasInvalid); }, [hasInvalid, onDraftValidityChange]);
   const validity = (key: string, valid: boolean) => setInvalid((current) => ({ ...current, [key]: !valid }));
@@ -37,11 +38,10 @@ export function MahjongPanel({ value, onChange, onDraftValidityChange }: Props) 
         <label>開始点<NumberField label="開始点" value={value.settings.startingPoints} onChange={(startingPoints) => updateSettings({ startingPoints })} onValidityChange={(valid) => validity('rule:startingPoints', valid)} /></label>
         <label>返し点<NumberField label="返し点" value={value.settings.returnPoints} onChange={(returnPoints) => updateSettings({ returnPoints })} onValidityChange={(valid) => validity('rule:returnPoints', valid)} /></label>
         <label>レート（1000点あたり円）<NumberField label="レート" value={value.settings.rate} decimal onChange={(rate) => updateSettings({ rate })} onValidityChange={(valid) => validity('rule:rate', valid)} /></label>
-        <label>オカ（点）<NumberField label="オカ" value={value.settings.oka} signed onChange={(oka) => updateSettings({ oka })} onValidityChange={(valid) => validity('rule:oka', valid)} /></label>
         {value.settings.uma.map((uma, index) => <label key={index}>{index + 1}位ウマ（点）<NumberField label={`${index + 1}位ウマ`} value={uma} signed onChange={(amount) => updateSettings({ uma: value.settings.uma.map((item, rank) => rank === index ? amount : item) })} onValidityChange={(valid) => validity(`rule:uma:${index}`, valid)} /></label>)}
         <label className="checkbox-label"><input aria-label="チップを含める" type="checkbox" checked={value.settings.includeChips} onChange={(event) => updateSettings({ includeChips: event.target.checked })} />チップを含める</label>
         {value.settings.includeChips && <label>チップ1枚（円）<NumberField label="チップ単価" value={value.settings.chipValue} onChange={(chipValue) => updateSettings({ chipValue })} onValidityChange={(valid) => validity('rule:chipValue', valid)} /></label>}
-      </div><p className="section-description">点5は 50 円、点ピンは 100 円を目安に、自由に入力できます。</p>
+      </div><p className="section-description">返し点との差分 {automaticTopUp.toLocaleString('ja-JP')} 点をトップに自動加算します。点5は 50 円、点ピンは 100 円が目安です。</p>
     </section>
     <section className="card game-card mahjong-records"><div className="section-heading"><div><span className="eyebrow">半荘の記録</span><h2>最新の半荘を上に表示</h2></div><div className="history-actions"><button type="button" className="outline-button add-match-button" onClick={addMatch}>＋ 半荘を追加</button></div></div>
       {value.matches.length === 0 ? <p className="section-description">半荘はまだありません。</p> : [...value.matches].reverse().map((match) => {

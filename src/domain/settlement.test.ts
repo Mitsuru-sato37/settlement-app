@@ -155,7 +155,7 @@ describe('settlement calculations', () => {
       { participantId: 'b', points: 35000, chips: 0 },
       { participantId: 'c', points: 30000, chips: 1 },
       { participantId: 'd', points: 30000, chips: 1 },
-    ], { startingPoints: 35000, returnPoints: 35000, rate: 50, oka: 0, uma: [20000, 10000, -10000, -20000], includeChips: true, chipValue: 100 })).toEqual([
+    ], { startingPoints: 35000, returnPoints: 35000, rate: 50, uma: [20000, 10000, -10000, -20000], includeChips: true, chipValue: 100 })).toEqual([
       { participantId: 'a', amount: 1600 },
       { participantId: 'b', amount: 400 },
       { participantId: 'c', amount: -750 },
@@ -167,7 +167,7 @@ describe('settlement calculations', () => {
     expect(calculateMahjongBalances([
       { participantId: 'a', points: 40000, chips: 0 },
       { participantId: 'b', points: 30000, chips: 0 },
-    ], { startingPoints: 35000, returnPoints: 35000, rate: 50, oka: 0, uma: [0, 0], includeChips: false, chipValue: 100 })).toEqual([
+    ], { startingPoints: 35000, returnPoints: 35000, rate: 50, uma: [0, 0], includeChips: false, chipValue: 100 })).toEqual([
       { participantId: 'a', amount: 250 },
       { participantId: 'b', amount: -250 },
     ]);

@@ -18,7 +18,7 @@ export function calculateMahjongMatch(match: MahjongMatch, settings: MahjongSett
     || new Set(match.players.map((player) => player.participantId)).size !== match.players.length) issues.push('席に異なる参加者を選んでください');
   if (match.players.some((player) => !Number.isSafeInteger(player.points) || player.points < 0 || !Number.isSafeInteger(player.chips) || player.chips < 0)) issues.push('点数とチップは0以上の整数にしてください');
   if (!Number.isSafeInteger(settings.startingPoints) || settings.startingPoints <= 0 || !Number.isSafeInteger(settings.returnPoints) || settings.returnPoints <= 0
-    || !Number.isSafeInteger(settings.oka) || !Number.isFinite(settings.rate) || settings.rate < 0
+    || !Number.isFinite(settings.rate) || settings.rate < 0
     || settings.uma.length !== playerCount || !settings.uma.every(Number.isSafeInteger)
     || !Number.isSafeInteger(settings.chipValue) || settings.chipValue < 0) issues.push('ルール設定を確認してください');
   const pointsTotal = match.players.reduce((sum, player) => sum + player.points, 0);
@@ -27,9 +27,10 @@ export function calculateMahjongMatch(match: MahjongMatch, settings: MahjongSett
   const ranked = match.players.map((player, index) => ({ player, index })).sort((left, right) => right.player.points - left.player.points || left.index - right.index);
   const rankById = new Map(ranked.map((item, rank) => [item.player.participantId, rank]));
   const averageChips = match.players.reduce((sum, player) => sum + player.chips, 0) / playerCount;
+  const automaticTopUp = (settings.returnPoints - settings.startingPoints) * playerCount;
   const raw = match.players.map((player) => {
     const rank = rankById.get(player.participantId)!;
-    const points = player.points - settings.returnPoints + settings.uma[rank] + (rank === 0 ? settings.oka : 0);
+    const points = player.points - settings.returnPoints + settings.uma[rank] + (rank === 0 ? automaticTopUp : 0);
     const chipAmount = settings.includeChips ? (player.chips - averageChips) * settings.chipValue : 0;
     return { participantId: player.participantId, amount: points * settings.rate / 1000 + chipAmount };
   });
