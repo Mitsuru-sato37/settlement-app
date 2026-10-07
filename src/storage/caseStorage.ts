@@ -55,7 +55,7 @@ function validCase(value: unknown): boolean {
     if (count !== 3 && count !== 4) return false;
     const settings = value.settings;
     if (!record(settings) || !integer(settings.startingPoints) || settings.startingPoints <= 0 || !integer(settings.returnPoints) || settings.returnPoints <= 0
-      || !finite(settings.rate) || settings.rate < 0 || !integer(settings.oka) || !Array.isArray(settings.uma) || settings.uma.length !== count
+      || !finite(settings.rate) || settings.rate < 0 || !Array.isArray(settings.uma) || settings.uma.length !== count
       || !settings.uma.every(integer) || typeof settings.includeChips !== 'boolean' || !nonnegative(settings.chipValue)) return false;
     if (!integer(value.nextMatchNumber) || value.nextMatchNumber < 1 || !Array.isArray(value.matches)) return false;
     return value.matches.every((match) => record(match) && nonempty(match.id) && nonempty(match.label) && Array.isArray(match.players)

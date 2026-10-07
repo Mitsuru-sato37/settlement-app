@@ -53,7 +53,6 @@ export type MahjongSettings = {
   startingPoints: number;
   returnPoints: number;
   rate: number;
-  oka: number;
   uma: number[];
   includeChips: boolean;
   chipValue: number;

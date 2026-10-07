@@ -107,11 +107,12 @@ export function calculateGameBalance(values: number[]): GameBalanceStatus {
 
 export function calculateMahjongBalances(players: MahjongPlayerInput[], settings: MahjongSettings): Balance[] {
   const ranked = [...players].sort((left, right) => right.points - left.points);
+  const automaticTopUp = (settings.returnPoints - settings.startingPoints) * players.length;
   const averageChips = players.length === 0 ? 0 : players.reduce((sum, player) => sum + player.chips, 0) / players.length;
   return ranked.map((player, rank) => {
     const pointBalance = ((player.points - settings.returnPoints) / 1000) * settings.rate;
     const umaBalance = ((settings.uma[rank] ?? 0) / 1000) * settings.rate;
-    const okaBalance = rank === 0 ? (settings.oka / 1000) * settings.rate : 0;
+    const okaBalance = rank === 0 ? (automaticTopUp / 1000) * settings.rate : 0;
     const chipBalance = settings.includeChips ? (player.chips - averageChips) * settings.chipValue : 0;
     return { participantId: player.participantId, amount: Math.round(pointBalance + umaBalance + okaBalance + chipBalance) };
   }).sort((left, right) => players.findIndex((player) => player.participantId === left.participantId) - players.findIndex((player) => player.participantId === right.participantId));

@@ -16,8 +16,16 @@ describe('mahjong settlement', () => {
     expect(three.difference).toBe(0);
   });
 
+  it('derives the top-up from the return-point gap and keeps a custom return zero-sum', () => {
+    const settings = { ...defaultMahjongSettings(4), returnPoints: 28000, rate: 100 };
+    const result = calculateMahjongMatch(match(['a', 'b', 'c', 'd'], [40000, 30000, 20000, 10000]), settings, 4);
+
+    expect(result.balances.map((item) => item.amount)).toEqual([4400, 1200, -1800, -3800]);
+    expect(result.difference).toBe(0);
+  });
+
   it('uses seat order for equal scores and applies custom uma, rate and chips', () => {
-    const settings = { ...defaultMahjongSettings(4), startingPoints: 25000, returnPoints: 25000, oka: 0, uma: [3000, 1000, -1000, -3000], rate: 100, includeChips: true, chipValue: 50 };
+    const settings = { ...defaultMahjongSettings(4), startingPoints: 25000, returnPoints: 25000, uma: [3000, 1000, -1000, -3000], rate: 100, includeChips: true, chipValue: 50 };
     const result = calculateMahjongMatch(match(['a', 'b', 'c', 'd'], [25000, 25000, 25000, 25000], [2, 0, 0, 0]), settings, 4);
     expect(result.balances.map((item) => item.amount)).toEqual([375, 75, -125, -325]);
   });
@@ -26,7 +34,7 @@ describe('mahjong settlement', () => {
     const invalid = calculateMahjongMatch(match(['a', 'b', 'c', 'd'], [40000, 30000, 20000, 9000]), defaultMahjongSettings(4), 4);
     expect(invalid.transfers).toEqual([]);
     expect(invalid.issues.join(' ')).toContain('持ち点合計');
-    const settings = { ...defaultMahjongSettings(4), oka: 0 };
+    const settings = { ...defaultMahjongSettings(4), uma: [20000, 10000, -10000, -40000] };
     expect(calculateMahjongMatch(match(['a', 'b', 'c', 'd'], [40000, 30000, 20000, 10000]), settings, 4).difference).toBe(1000);
   });
 
