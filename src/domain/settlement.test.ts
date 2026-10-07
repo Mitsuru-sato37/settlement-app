@@ -10,6 +10,23 @@ describe('settlement calculations', () => {
     });
   });
 
+  it('does not hide a one-yen difference when large balances cancel', () => {
+    const limit = Number.MAX_SAFE_INTEGER;
+    const values = [limit, limit, limit, 1, -limit, -limit, -limit];
+    expect(calculateGameBalance(values)).toEqual({ total: 1, difference: 1, isBalanced: false });
+    const result = finalizeBalances([
+      { participantId: 'a', amount: limit },
+      { participantId: 'b', amount: limit },
+      { participantId: 'c', amount: limit },
+      { participantId: 'd', amount: 1 },
+      { participantId: 'e', amount: -limit },
+      { participantId: 'f', amount: -limit },
+      { participantId: 'g', amount: -limit },
+    ], []);
+    expect(result).toMatchObject({ difference: 1, transfers: [] });
+    expect(result.issues).toContain('収支が 1 円一致していません');
+  });
+
   it('rejects an expense with no recipients or an unknown payer', () => {
     const value = createCase('normal', '旅行', 'n1', 'now') as NormalCase;
     value.participants = [{ id: 'a', name: 'A', initials: 'A', color: '#fff' }];
@@ -65,6 +82,55 @@ describe('settlement calculations', () => {
     const shares = splitExpense({ amount: 1000, participantIds: ['a', 'b', 'c'] });
     expect(shares.reduce((total, share) => total + share.amount, 0)).toBe(1000);
     expect(shares.map((share) => share.amount)).toEqual([334, 333, 333]);
+  });
+
+  it('settles zero and positive expenses for one and two participants without extra transfers', () => {
+    const one = calculateSettlement([
+      { id: 'self', label: '自分の費用', amount: Number.MAX_SAFE_INTEGER, payerId: 'a', participantIds: ['a'] },
+      { id: 'zero', label: '無料', amount: 0, payerId: 'a', participantIds: ['a'] },
+    ], ['a']);
+    expect(one).toMatchObject({ total: Number.MAX_SAFE_INTEGER, balances: [{ participantId: 'a', amount: 0 }] });
+    expect(calculateTransfers(one.balances)).toEqual([]);
+
+    const two = calculateSettlement([
+      { id: 'split', label: '小額', amount: 1, payerId: 'a', participantIds: ['b'] },
+    ], ['a', 'b']);
+    expect(two.balances).toEqual([{ participantId: 'a', amount: 1 }, { participantId: 'b', amount: -1 }]);
+    expect(calculateTransfers(two.balances)).toEqual([{ fromId: 'b', toId: 'a', amount: 1 }]);
+  });
+
+  it('settles overlapping full and partial expense groups with no circular payments', () => {
+    const value = createCase('normal', '区間精算', 'segments', 'now') as NormalCase;
+    value.participants = ['a', 'b', 'c', 'd'].map((id) => ({ id, name: id, initials: id, color: '#fff' }));
+    value.expenses = [
+      { id: 'full', label: '富山→名古屋', amount: 9000, payerId: 'a', participantIds: ['a', 'b', 'c'] },
+      { id: 'partial', label: '岐阜→名古屋', amount: 6000, payerId: 'b', participantIds: ['b', 'c'] },
+      { id: 'self', label: 'A個人分', amount: 500, payerId: 'a', participantIds: ['a'] },
+    ];
+    const result = calculateNormalCase(value);
+    expect(result.balances).toEqual([
+      { participantId: 'a', amount: 6000 },
+      { participantId: 'b', amount: 0 },
+      { participantId: 'c', amount: -6000 },
+      { participantId: 'd', amount: 0 },
+    ]);
+    expect(result.transfers).toEqual([{ fromId: 'c', toId: 'a', amount: 6000 }]);
+    expect(result.transfers.every((transfer) => transfer.amount > 0 && transfer.fromId !== transfer.toId)).toBe(true);
+  });
+
+  it('preserves the settlement when one person makes several payments and many people share', () => {
+    const value = createCase('normal', '大人数', 'many', 'now') as NormalCase;
+    value.participants = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, name: id, initials: id, color: '#fff' }));
+    value.expenses = [
+      { id: '1', label: '立替1', amount: 100_000_000, payerId: 'a', participantIds: ['a', 'b', 'c', 'd', 'e', 'f'] },
+      { id: '2', label: '立替2', amount: 7, payerId: 'a', participantIds: ['b', 'c', 'd', 'e', 'f'] },
+      { id: '3', label: '立替3', amount: 3, payerId: 'c', participantIds: ['a', 'c'] },
+    ];
+    const result = calculateNormalCase(value);
+    expect(result.issues).toEqual([]);
+    expect(result.balances.reduce((sum, item) => sum + BigInt(item.amount), 0n)).toBe(0n);
+    expect(result.transfers.reduce((sum, item) => sum + item.amount, 0)).toBe(83_333_338);
+    expect(result.transfers.every((transfer) => transfer.fromId !== transfer.toId && transfer.amount > 0)).toBe(true);
   });
 
   it('updates balances when a receipt recipient is changed', () => {

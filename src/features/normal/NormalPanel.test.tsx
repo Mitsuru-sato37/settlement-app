@@ -54,4 +54,19 @@ describe('normal panel', () => {
     expect(view.container.textContent).toContain('合計金額が円の安全な範囲を超えています');
     expect(view.container.querySelectorAll('.transfer-row')).toHaveLength(0);
   });
+
+  it('withholds transfers for negative, decimal, empty, and non-numeric amount drafts', async () => {
+    const view = await render();
+    await view.click('明細を追加');
+    await view.click('あきを対象にする');
+    await view.click('びんを対象にする');
+    await view.input('金額 1', '1');
+    expect(view.container.querySelectorAll('.transfer-row')).toHaveLength(1);
+
+    for (const invalidAmount of ['-1', '1.5', ' ', 'abc']) {
+      await view.input('金額 1', invalidAmount);
+      expect(view.container.querySelectorAll('.transfer-row'), invalidAmount).toHaveLength(0);
+      expect(view.container.textContent).toContain('入力中の数値を修正してください');
+    }
+  });
 });

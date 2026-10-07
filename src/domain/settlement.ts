@@ -1,7 +1,8 @@
 import type { Balance, ExpenseItem, GameBalanceStatus, MahjongPlayerInput, MahjongSettings, NormalCase, PokerCase, RouletteShare, SettlementResult, SettlementSummary, Transfer } from './model';
 
 export function finalizeBalances(balances: Balance[], issues: string[]): SettlementResult {
-  const difference = Math.abs(balances.reduce((sum, balance) => sum + balance.amount, 0));
+  const total = balances.reduce((sum, balance) => sum + BigInt(balance.amount), 0n);
+  const difference = Number(total < 0n ? -total : total);
   const allIssues = [...issues];
   if (difference !== 0) allIssues.push(`収支が ${difference} 円一致していません`);
   return { balances, transfers: allIssues.length === 0 ? calculateTransfers(balances) : [], issues: allIssues, difference };
@@ -98,8 +99,10 @@ export function calculateTransfers(balances: Balance[]): Transfer[] {
 }
 
 export function calculateGameBalance(values: number[]): GameBalanceStatus {
-  const total = values.reduce((sum, value) => sum + value, 0);
-  return { total, difference: Math.abs(total), isBalanced: total === 0 };
+  const exactTotal = values.reduce((sum, value) => sum + BigInt(value), 0n);
+  const total = Number(exactTotal);
+  const difference = Number(exactTotal < 0n ? -exactTotal : exactTotal);
+  return { total, difference, isBalanced: exactTotal === 0n };
 }
 
 export function calculateMahjongBalances(players: MahjongPlayerInput[], settings: MahjongSettings): Balance[] {
