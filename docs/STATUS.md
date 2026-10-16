@@ -3,6 +3,14 @@
 Status: Active cross-PC handoff entry point
 Last updated: 2026-10-17
 
+## 2026-10-17 result image sharing merged into main
+
+- Active branch: `main`.
+- Completed: merged `codex/share-settlement-result-image` into `main` with a merge commit. The confirmed final result can be shared or saved as one PNG in normal, poker, mahjong, and noriumi modes.
+- Next: verify native file sharing on iOS/Android hardware when available; deploy through the normal release flow if desired.
+- Verification: on merged `main`, `npm test` passed (15 files, 88 tests), `npm run typecheck` passed, and `npm run build` passed.
+- Blockers / external dependencies: no merge or test blocker. Existing untracked `.sites-checkout/` is unrelated and untouched.
+
 ## 2026-10-17 final result image sharing implementation
 
 - Active branch: `codex/share-settlement-result-image`.
