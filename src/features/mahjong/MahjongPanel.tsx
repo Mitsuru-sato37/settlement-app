@@ -31,7 +31,7 @@ export function MahjongPanel({ value, onChange, onDraftValidityChange }: Props) 
   const changePlayer = (match: MahjongMatch, index: number, changes: Partial<MahjongMatch['players'][number]>) => updateMatch(match.id, { ...match, players: match.players.map((player, seat) => seat === index ? { ...player, ...changes } : player) });
 
   return <div className="mode-panel">
-    <div className="mahjong-summary"><ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} issues={hasInvalid ? [...result.issues, '入力中の数値を修正してください'] : result.issues} title="現時点での集計" eyebrow="全半荘の累計" /></div>
+    <div className="mahjong-summary"><ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} issues={hasInvalid ? [...result.issues, '入力中の数値を修正してください'] : result.issues} title="現時点での集計" eyebrow="全半荘の累計" shareRecord={{ id: value.id, title: value.title, modeLabel: '麻雀' }} /></div>
     <section className="card game-card"><div className="section-heading"><div><span className="eyebrow">麻雀</span><h2>ルール設定</h2></div></div>
       <div className="mahjong-settings">
         <label>人数<select aria-label="麻雀人数" value={value.playerCount} onChange={(event) => changeCount(Number(event.target.value) as 3 | 4)}><option value="4">四麻</option><option value="3">三麻</option></select></label>

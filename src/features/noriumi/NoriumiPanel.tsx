@@ -26,5 +26,5 @@ export function NoriumiPanel({ value, onChange, onDraftValidityChange }: Props) 
       <NumberField label={`${person.name}の回収額`} value={value.entries[person.id]?.recovery ?? 0} onChange={(recovery) => update(person.id, { recovery })} onValidityChange={(valid) => validity(`${person.id}:recovery`, valid)} />
       <span>¥{shares[index]?.toLocaleString('ja-JP') ?? 0}</span></div>)}
     <div className="game-total"><span>全体損益</span><strong>¥{total.toLocaleString('ja-JP')}</strong></div>
-  </section><ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} issues={hasInvalid ? [...result.issues, '入力中の数値を修正してください'] : result.issues} title="均等精算の結果" /></div>;
+  </section><ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} issues={hasInvalid ? [...result.issues, '入力中の数値を修正してください'] : result.issues} title="均等精算の結果" shareRecord={{ id: value.id, title: value.title, modeLabel: 'ノリ打ち' }} /></div>;
 }

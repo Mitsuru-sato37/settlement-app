@@ -16,5 +16,5 @@ export function PokerPanel({ value, onChange, onDraftValidityChange }: Props) {
     <p className="section-description">受け取る人はプラス、支払う人はマイナス。全員の合計が 0 円になると送金を表示します。</p>
     <div className="game-list">{value.participants.length === 0 ? <p>参加者を追加してください。</p> : value.participants.map((person) => <div className="game-row" key={person.id}><strong>{person.name}</strong><NumberField label={`${person.name}の収支`} value={value.amounts[person.id] ?? 0} signed onChange={(amount) => onChange({ ...value, amounts: { ...value.amounts, [person.id]: amount } })} onValidityChange={(valid) => setInvalidIds((current) => ({ ...current, [person.id]: !valid }))} /><span>円</span></div>)}</div>
     <div className="game-total"><span>全員の収支合計</span><strong>¥{status.total.toLocaleString('ja-JP')}</strong></div>
-  </section><ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} status={status} issues={hasInvalid ? [...result.issues, '入力中の数値を修正してください'] : result.issues} /></div>;
+  </section><ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} status={status} issues={hasInvalid ? [...result.issues, '入力中の数値を修正してください'] : result.issues} shareRecord={{ id: value.id, title: value.title, modeLabel: 'ポーカー' }} /></div>;
 }
