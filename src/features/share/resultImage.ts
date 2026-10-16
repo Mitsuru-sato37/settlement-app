@@ -37,18 +37,26 @@ export async function renderResultPng(input: ShareImageInput): Promise<Blob> {
   const titleLines = wrapText(input.title, WIDTH - PADDING * 2, measure);
   context.font = `30px ${FONT}`;
   const names = new Map(input.participants.map((person) => [person.id, person.name]));
-  const balanceRows = input.balances.map((balance) => ({
-    lines: wrapText(names.get(balance.participantId) ?? balance.participantId, 480, measure),
-    amount: balance.amount === 0 ? '0円' : `${balance.amount > 0 ? '受け取り' : '支払い'} ${Math.abs(balance.amount).toLocaleString('ja-JP')}円`,
-  }));
-  const transferRows = input.transfers.map((transfer) => ({
-    lines: wrapText(`${names.get(transfer.fromId) ?? transfer.fromId} → ${names.get(transfer.toId) ?? transfer.toId}`, 580, measure),
-    amount: `${transfer.amount.toLocaleString('ja-JP')}円`,
-  }));
-  const rowHeight = (lines: string[]) => Math.max(70, lines.length * LINE_HEIGHT + 20);
+  const measureAmount = (amount: string) => {
+    context.font = `bold 28px ${FONT}`;
+    const width = context.measureText(amount).width;
+    context.font = `30px ${FONT}`;
+    return width;
+  };
+  const balanceRows = input.balances.map((balance) => {
+    const amount = balance.amount === 0 ? '0円' : `${balance.amount > 0 ? '受け取り' : '支払い'} ${Math.abs(balance.amount).toLocaleString('ja-JP')}円`;
+    const amountWidth = measureAmount(amount);
+    return { lines: wrapText(names.get(balance.participantId) ?? balance.participantId, 480, measure), amount, amountWidth, separateAmount: amountWidth > 320 };
+  });
+  const transferRows = input.transfers.map((transfer) => {
+    const amount = `${transfer.amount.toLocaleString('ja-JP')}円`;
+    const amountWidth = measureAmount(amount);
+    return { lines: wrapText(`${names.get(transfer.fromId) ?? transfer.fromId} → ${names.get(transfer.toId) ?? transfer.toId}`, 580, measure), amount, amountWidth, separateAmount: amountWidth > 240 };
+  });
+  const rowHeight = (lines: string[], separateAmount = false) => Math.max(70, lines.length * LINE_HEIGHT + 20) + (separateAmount ? LINE_HEIGHT + 5 : 0);
   const titleHeight = titleLines.length * 58;
-  const balancesHeight = balanceRows.reduce((sum, row) => sum + rowHeight(row.lines), 0);
-  const transfersHeight = transferRows.length === 0 ? 82 : transferRows.reduce((sum, row) => sum + rowHeight(row.lines), 0);
+  const balancesHeight = balanceRows.reduce((sum, row) => sum + rowHeight(row.lines, row.separateAmount), 0);
+  const transfersHeight = transferRows.length === 0 ? 82 : transferRows.reduce((sum, row) => sum + rowHeight(row.lines, row.separateAmount), 0);
   const height = PADDING * 2 + titleHeight + 72 + 80 + balancesHeight + 100 + transfersHeight + 45;
   if (!Number.isSafeInteger(height) || height > 32000) throw new Error('画像が大きすぎます');
   canvas.height = height;
@@ -70,10 +78,10 @@ export async function renderResultPng(input: ShareImageInput): Promise<Blob> {
   for (const row of balanceRows) {
     const top = y;
     context.fillStyle = '#f7f9fb';
-    context.fillRect(PADDING, top, WIDTH - PADDING * 2, rowHeight(row.lines) - 8);
+    context.fillRect(PADDING, top, WIDTH - PADDING * 2, rowHeight(row.lines, row.separateAmount) - 8);
     row.lines.forEach((line, index) => draw(line, PADDING + 20, top + 43 + index * LINE_HEIGHT, `30px ${FONT}`, '#263243'));
-    draw(row.amount, WIDTH - PADDING - 320, top + 43, `bold 28px ${FONT}`, '#263243');
-    y += rowHeight(row.lines);
+    draw(row.amount, row.separateAmount ? WIDTH - PADDING - row.amountWidth : WIDTH - PADDING - 320, top + 43 + (row.separateAmount ? row.lines.length * LINE_HEIGHT : 0), `bold 28px ${FONT}`, '#263243');
+    y += rowHeight(row.lines, row.separateAmount);
   }
   y += 60;
   draw('送金一覧', PADDING, y, `bold 34px ${FONT}`, '#1f2b3a');
@@ -85,8 +93,8 @@ export async function renderResultPng(input: ShareImageInput): Promise<Blob> {
     for (const row of transferRows) {
       const top = y;
       row.lines.forEach((line, index) => draw(line, PADDING, top + 42 + index * LINE_HEIGHT, `30px ${FONT}`, '#263243'));
-      draw(row.amount, WIDTH - PADDING - 240, top + 42, `bold 28px ${FONT}`, '#263243');
-      y += rowHeight(row.lines);
+      draw(row.amount, row.separateAmount ? WIDTH - PADDING - row.amountWidth : WIDTH - PADDING - 240, top + 42 + (row.separateAmount ? row.lines.length * LINE_HEIGHT : 0), `bold 28px ${FONT}`, '#263243');
+      y += rowHeight(row.lines, row.separateAmount);
     }
   }
 

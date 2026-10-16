@@ -78,6 +78,27 @@ describe('result image', () => {
     expect(sameTransferLine.every((item) => item.x + [...item.text].length * 30 + 40 <= transferAmount.x)).toBe(true);
   });
 
+  it('keeps every digit of a large valid balance and transfer inside the PNG', async () => {
+    const painted: { text: string; x: number; y: number }[] = [];
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockImplementation(() => ({
+      fillRect: vi.fn(),
+      fillText: vi.fn((text: string, x: number, y: number) => painted.push({ text, x, y })),
+      measureText: vi.fn((text: string) => ({ width: [...text].length * 20 })),
+    } as unknown as CanvasRenderingContext2D));
+    await renderResultPng(input({
+      participants: people.slice(0, 2),
+      balances: [{ participantId: 'a', amount: Number.MAX_SAFE_INTEGER }, { participantId: 'b', amount: -Number.MAX_SAFE_INTEGER }],
+      transfers: [{ fromId: 'b', toId: 'a', amount: Number.MAX_SAFE_INTEGER }],
+    }));
+    const money = painted.filter((item) => item.text.includes('9,007,199,254,740,991'));
+    expect(money).toHaveLength(3);
+    expect(money.every((item) => item.x >= 72 && item.x + [...item.text].length * 20 <= 1008)).toBe(true);
+    for (const item of money) {
+      const sameLine = painted.filter((other) => other !== item && other.y === item.y && other.x < item.x);
+      expect(sameLine.every((other) => other.x + [...other.text].length * 20 + 40 <= item.x)).toBe(true);
+    }
+  });
+
   it('renders every balance and transfer from the confirmed result', async () => {
     const blob = await renderResultPng(input());
     expect(blob.type).toBe('image/png');
