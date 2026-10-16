@@ -46,6 +46,38 @@ describe('result image', () => {
     expect(lines.join('')).toBe(text);
   });
 
+  it('measures a long title at its rendered font size', async () => {
+    // The renderer creates its own canvas; record the font seen by measureText.
+    const fonts: string[] = [];
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockImplementation(() => ({
+      fillRect: vi.fn(), fillText: vi.fn(),
+      measureText: vi.fn(function (this: CanvasRenderingContext2D, text: string) { fonts.push(this.font); return { width: [...text].length * 20 }; }),
+    } as unknown as CanvasRenderingContext2D));
+    await renderResultPng(input({ title: 'とても長い精算結果のタイトル' }));
+    expect(fonts[0]).toContain('40px');
+  });
+
+  it('keeps wrapped names clear of amounts', async () => {
+    const painted: { text: string; x: number; y: number }[] = [];
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockImplementation(() => ({
+      fillRect: vi.fn(),
+      fillText: vi.fn((text: string, x: number, y: number) => painted.push({ text, x, y })),
+      measureText: vi.fn((text: string) => ({ width: [...text].length * 30 })),
+    } as unknown as CanvasRenderingContext2D));
+    const longName = '非常に長い日本語の参加者名として表示を確認するための人';
+    await renderResultPng(input({
+      participants: [{ ...people[0], name: longName }, people[1]],
+      balances: [{ participantId: 'a', amount: -12345 }, { participantId: 'b', amount: 12345 }],
+      transfers: [{ fromId: 'a', toId: 'b', amount: 12345 }],
+    }));
+    const amount = painted.find((item) => item.text === '支払い 12,345円')!;
+    const sameBalanceLine = painted.filter((item) => item.y === amount.y && item.x < amount.x);
+    expect(sameBalanceLine.every((item) => item.x + [...item.text].length * 30 + 40 <= amount.x)).toBe(true);
+    const transferAmount = painted.find((item) => item.text === '12,345円')!;
+    const sameTransferLine = painted.filter((item) => item.y === transferAmount.y && item.x < transferAmount.x);
+    expect(sameTransferLine.every((item) => item.x + [...item.text].length * 30 + 40 <= transferAmount.x)).toBe(true);
+  });
+
   it('renders every balance and transfer from the confirmed result', async () => {
     const blob = await renderResultPng(input());
     expect(blob.type).toBe('image/png');

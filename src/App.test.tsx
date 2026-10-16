@@ -5,11 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STORAGE_KEY } from './storage/caseStorage';
 import { addCase, createCase, createEmptyStore } from './domain/cases';
 import App from './App';
+import { renderResultPng } from './features/share/resultImage';
+
+vi.mock('./features/share/resultImage', () => ({ renderResultPng: vi.fn() }));
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
-beforeEach(() => { localStorage.clear(); });
+beforeEach(() => { localStorage.clear(); vi.mocked(renderResultPng).mockResolvedValue(new Blob(['png'], { type: 'image/png' })); });
 afterEach(async () => { if (root) await act(async () => root!.unmount()); container?.remove(); root = undefined; container = undefined; vi.restoreAllMocks(); });
 
 async function mount() {
@@ -35,6 +38,31 @@ async function addPeople(names: string[]) {
 }
 
 describe('practical settlement app', () => {
+  it('offers one result image in the four settlement modes, including a valid zero result, but not roulette', async () => {
+    const screen = await mount();
+    for (const mode of ['通常精算', 'ポーカー', '麻雀', 'ノリ打ち']) {
+      await click(mode === '通常精算' ? '記録を作成' : `${mode}を作成`);
+      expect(screen.textContent).not.toContain('画像を共有');
+      await addPeople(mode === '麻雀' ? ['あき', 'びん', 'ちえ', 'だい'] : ['あき']);
+      if (mode === '麻雀') await click('半荘を追加');
+      expect(screen.textContent).toContain('画像を共有');
+      expect(screen.textContent).toContain('PNGを保存');
+      expect(screen.querySelector<HTMLButtonElement>('.result-share-actions button')?.disabled).toBe(false);
+    }
+    await click('全額払いルーレットを作成');
+    await addPeople(['あき']);
+    expect(screen.textContent).not.toContain('画像を共有');
+  });
+
+  it('blocks result image actions for invalid drafts and nonzero balance differences', async () => {
+    const screen = await mount();
+    await click('記録を作成'); await addPeople(['あき']);
+    await click('明細を追加'); await input('金額 1', 'abc');
+    expect(screen.textContent).not.toContain('画像を共有');
+    await click('ポーカーを作成'); await addPeople(['あき', 'びん']);
+    await input('あきの収支', '100');
+    expect(screen.textContent).not.toContain('画像を共有');
+  });
   it('starts without sample values or fake save labels and restores edited normal settlement', async () => {
     const screen = await mount();
     expect(screen.textContent).toContain('記録はまだありません');

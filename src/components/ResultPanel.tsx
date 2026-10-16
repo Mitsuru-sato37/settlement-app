@@ -1,5 +1,6 @@
 import type { Balance, GameBalanceStatus, Participant, Transfer } from '../domain/model';
 import { Avatar } from './Avatar';
+import { ResultShareActions } from './ResultShareActions';
 
 type ResultPanelProps = {
   balances: Balance[];
@@ -9,9 +10,11 @@ type ResultPanelProps = {
   eyebrow?: string;
   status?: GameBalanceStatus;
   issues?: string[];
+  shareRecord?: { id: string; title: string; modeLabel: string };
 };
 
-export function ResultPanel({ balances, participants, transfers = [], title = '精算結果', eyebrow = '現在の収支', status, issues = [] }: ResultPanelProps) {
+export function ResultPanel({ balances, participants, transfers = [], title = '精算結果', eyebrow = '現在の収支', status, issues = [], shareRecord }: ResultPanelProps) {
+  const canShare = participants.length > 0 && issues.length === 0 && (!status || status.isBalanced);
   return <section className="result-panel card">
     <div className="section-heading">
       <div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2></div>
@@ -41,5 +44,7 @@ export function ResultPanel({ balances, participants, transfers = [], title = '�
       })}
     </div>}
     {issues.length === 0 && <div className="transfer-note"><span>↔</span><span>差額は参加者間で自動的に相殺されます</span></div>}
+    {shareRecord && canShare && <ResultShareActions key={shareRecord.id} recordId={shareRecord.id}
+      input={{ title: shareRecord.title, modeLabel: shareRecord.modeLabel, participants, balances, transfers }} />}
   </section>;
 }

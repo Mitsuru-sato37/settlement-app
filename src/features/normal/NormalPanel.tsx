@@ -27,6 +27,6 @@ export function NormalPanel({ value, onChange, onDraftValidityChange }: Props) {
         <div className="expense-participants" aria-label={`対象者 ${index + 1}`}>{value.participants.map((person) => <button type="button" key={person.id} className={`participant-chip ${expense.participantIds.includes(person.id) ? 'selected' : ''}`} aria-label={`${person.name}を対象にする`} aria-pressed={expense.participantIds.includes(person.id)} onClick={() => updateExpense(expense.id, { participantIds: expense.participantIds.includes(person.id) ? expense.participantIds.filter((id) => id !== person.id) : [...expense.participantIds, person.id] })}>{person.name}{expense.participantIds.includes(person.id) ? ' ✓' : ''}</button>)}</div>
       </div>)}
     </section>
-    <ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} issues={issues} />
+    <ResultPanel balances={result.balances} participants={value.participants} transfers={hasInvalid ? [] : result.transfers} issues={issues} shareRecord={{ id: value.id, title: value.title, modeLabel: '通常精算' }} />
   </div>;
 }

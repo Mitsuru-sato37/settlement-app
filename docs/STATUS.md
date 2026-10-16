@@ -1,7 +1,15 @@
 # Status
 
 Status: Active cross-PC handoff entry point
-Last updated: 2026-10-16
+Last updated: 2026-10-17
+
+## 2026-10-17 final result image sharing implementation
+
+- Active branch: `codex/share-settlement-result-image`.
+- Completed: added a single PNG of the confirmed final balances and transfer instructions for normal, poker, mahjong, and noriumi cases; roulette remains excluded. Added native file sharing, PNG download, stale-image protection, eligibility checks, README usage guidance, and scoped Vitest discovery to the app source.
+- Next: complete final code review, commit and push the branch, then merge/deploy through the normal release flow.
+- Verification: `npm test` passed (15 files, 87 tests); `npm run typecheck` and `npm run build` passed. In a browser, checked the generated PNG with short and long Japanese names, transfer rows, and the 390px result card and buttons. File sharing on an actual iOS/Android device has not been checked.
+- Blockers / external dependencies: no implementation blocker. The existing untracked `.sites-checkout/` is unrelated and untouched.
 
 ## 2026-10-16 result image sharing design
 

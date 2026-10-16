@@ -32,16 +32,17 @@ export async function renderResultPng(input: ShareImageInput): Promise<Blob> {
   const context = canvas.getContext('2d');
   if (!context) throw new Error('画像を作成できません');
   canvas.width = WIDTH;
-  context.font = `32px ${FONT}`;
+  context.font = `bold 40px ${FONT}`;
   const measure = (text: string) => context.measureText(text).width;
   const titleLines = wrapText(input.title, WIDTH - PADDING * 2, measure);
+  context.font = `30px ${FONT}`;
   const names = new Map(input.participants.map((person) => [person.id, person.name]));
   const balanceRows = input.balances.map((balance) => ({
-    lines: wrapText(names.get(balance.participantId) ?? balance.participantId, 590, measure),
+    lines: wrapText(names.get(balance.participantId) ?? balance.participantId, 480, measure),
     amount: balance.amount === 0 ? '0円' : `${balance.amount > 0 ? '受け取り' : '支払い'} ${Math.abs(balance.amount).toLocaleString('ja-JP')}円`,
   }));
   const transferRows = input.transfers.map((transfer) => ({
-    lines: wrapText(`${names.get(transfer.fromId) ?? transfer.fromId} → ${names.get(transfer.toId) ?? transfer.toId}`, 680, measure),
+    lines: wrapText(`${names.get(transfer.fromId) ?? transfer.fromId} → ${names.get(transfer.toId) ?? transfer.toId}`, 580, measure),
     amount: `${transfer.amount.toLocaleString('ja-JP')}円`,
   }));
   const rowHeight = (lines: string[]) => Math.max(70, lines.length * LINE_HEIGHT + 20);
