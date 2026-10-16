@@ -11,6 +11,14 @@ Last updated: 2026-10-16
 - Verification: design checked against the current `ResultPanel`, case model, and four mode panels; documentation checked for placeholders and contradictory scope. Application checks have not been rerun for this documentation-only change.
 - Blockers / external dependencies: written-spec review is the required next step under the brainstorming workflow. Existing untracked `.sites-checkout/` remains untouched.
 
+## 2026-10-16 result image implementation plan
+
+- Active branch: `codex/share-settlement-result-image`.
+- Completed: written-spec review was approved; prepared `docs/superpowers/plans/2026-10-16-settlement-result-image-sharing.md` with renderer, sharing, and four-mode UI tasks. No application code has changed.
+- Next: review the plan and select native or subagent-driven execution, then implement task by task.
+- Verification: checked plan coverage against the approved spec, interface names, five high-risk input classes, and `git diff --check`. No application checks were needed for this documentation-only step.
+- Blockers / external dependencies: plan review and execution-method choice are required by the writing-plans workflow. Existing untracked `.sites-checkout/` remains untouched.
+
 ## 2026-10-16 product review
 
 - Active branch: `main` (`eb68cb5`, synchronized with `origin/main` at review start).
