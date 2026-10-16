@@ -3,6 +3,14 @@
 Status: Active cross-PC handoff entry point
 Last updated: 2026-10-16
 
+## 2026-10-16 result image sharing design
+
+- Active branch: `codex/share-settlement-result-image`.
+- Completed: documented the agreed one-image sharing flow for final balances and transfer instructions across normal, poker, mahjong, and noriumi modes. Roulette is excluded. No application behavior has changed yet.
+- Next: user review of `docs/superpowers/specs/2026-10-16-settlement-result-image-sharing-design.md`; after approval, write the implementation plan and then build and verify the feature.
+- Verification: design checked against the current `ResultPanel`, case model, and four mode panels; documentation checked for placeholders and contradictory scope. Application checks have not been rerun for this documentation-only change.
+- Blockers / external dependencies: written-spec review is the required next step under the brainstorming workflow. Existing untracked `.sites-checkout/` remains untouched.
+
 ## 2026-10-16 product review
 
 - Active branch: `main` (`eb68cb5`, synchronized with `origin/main` at review start).
