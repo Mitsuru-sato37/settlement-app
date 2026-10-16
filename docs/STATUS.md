@@ -1,7 +1,15 @@
 # Status
 
 Status: Active cross-PC handoff entry point
-Last updated: 2026-10-06
+Last updated: 2026-10-16
+
+## 2026-10-16 product review
+
+- Active branch: `main` (`eb68cb5`, synchronized with `origin/main` at review start).
+- Completed: compared the current behavior with official Splitwise and tricount feature documentation, MDN browser-storage guidance, and a published mahjong scoring example. No application behavior was changed.
+- Findings to address next: prevent silent overwrites between tabs; guard noriumi aggregate arithmetic beyond safe integers; decide and document mahjong tie handling; consider unequal expense splits and recording completed reimbursements; strengthen roulette result history and draw trust.
+- Verification: `npm test` (24 files, 135 tests), `npm run typecheck`, and `npm run build` passed. Reproduced a one-yen noriumi imbalance near `Number.MAX_SAFE_INTEGER` with a direct arithmetic example. Browser and physical-device interaction were not retested.
+- Blockers / external dependencies: product decisions are needed for tie rules and which additional settlement features belong in scope. Existing untracked `.sites-checkout/` was left intact.
 
 ## Current state
 
