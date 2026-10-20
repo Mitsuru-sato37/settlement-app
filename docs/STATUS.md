@@ -1,7 +1,15 @@
 # Status
 
 Status: Active cross-PC handoff entry point
-Last updated: 2026-10-17
+Last updated: 2026-10-20
+
+## 2026-10-20 cross-PC handoff audit
+
+- Active branch: `main`.
+- Completed: confirmed the checkout is synchronized with `origin/main`, the GitHub repository owner matches the connected account, and the public repository grants push access. No application code changed in this audit.
+- Next: verify native PNG sharing on iOS/Android hardware when available; deploy through the normal release flow if desired.
+- Verification: `git-status.cmd` fetched origin and reported no pull or push needed. GitHub branch metadata matched the local main commit before this documentation update. No application checks were needed for this documentation-only audit.
+- Blockers / external dependencies: `.sites-checkout/` is a separate registered worktree, clean on its own branch but behind its upstream; it contains ignored build and dependency outputs and hosting metadata. It remains untracked by this checkout and is excluded from this push. No blocker for resuming `main` on another PC.
 
 ## 2026-10-17 result image sharing merged into main
 
