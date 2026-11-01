@@ -64,3 +64,11 @@ On Windows, run this from the repository root at the start of work and before ha
 ```
 
 It fetches `origin` and reports the current branch, uncommitted changes, whether pull or push is needed, and whether the current feature branch is merged into `main`. If GitHub CLI (`gh`) is available, PR state is used for a more precise merge result; otherwise Git history/patch equivalence is used as a fallback.
+
+
+## Idea storage and shared standards
+
+- Store ideas specific to this project in its repository's existing idea index or under docs/ideas/, one Markdown file per idea. Keep a single canonical copy; do not duplicate the same memo in Drive.
+- Store ideas for standards or templates shared across repositories in Google Drive AI-Workspace/00_Inbox. Put ideas with no known project there temporarily, then move them to the owning repository when identified.
+- Check repository visibility before adding idea details. In a public repository, record only content intended for public release. Keep private planning details in a private project-specific location and do not expose its title or link in public files.
+- When a shared standard changes, update this repository's applicable instructions and procedures, preserve project-specific rules, and record the change in the canonical handoff. Follow the current process at https://github.com/Mitsuru-sato37/ai-workspace-foundation/blob/main/docs/14_shared_standard_rollout.md and the idea-storage source at https://github.com/Mitsuru-sato37/ai-workspace-foundation/blob/main/docs/11_idea_intake.md.
