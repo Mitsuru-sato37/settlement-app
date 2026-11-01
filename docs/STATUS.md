@@ -110,3 +110,11 @@ None for the repository handoff workflow.
 - 同じ名称の参加者や同じ名前・金額の明細は別IDで登録できる。現仕様は重複禁止を定めていないため、重複防止は追加していない。
 - GitHub Actionsがなく、GitHub上のCI結果はなし。FileReaderの実ブラウザー読込失敗注入も未実施。
 - ブラウザー履歴の戻る操作と、全モード全ボタン配置は未確認。
+
+
+## Shared standard alignment — 2026-11-02
+
+- Updated this repository's instructions for scope-based idea storage and public-repository privacy.
+- Canonical source: https://github.com/Mitsuru-sato37/ai-workspace-foundation/blob/main/docs/11_idea_intake.md
+- Rollout record: https://github.com/Mitsuru-sato37/ai-workspace-foundation/blob/main/docs/14_shared_standard_rollout.md
+- This branch contains the alignment change; it is complete after the PR is merged.
